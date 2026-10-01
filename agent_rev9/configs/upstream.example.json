@@ -1,0 +1,29 @@
+{
+  "data": {
+    "counts_rds": "${OMICRAFT_WORKSPACE}/datasets/tcga_brca/prepared/counts.rds",
+    "metadata_rds": "${OMICRAFT_WORKSPACE}/datasets/tcga_brca/prepared/metadata.rds",
+    "annotation_rds": "${OMICRAFT_WORKSPACE}/datasets/tcga_brca/prepared/annotation.rds",
+    "clinical_rds": "${OMICRAFT_WORKSPACE}/datasets/tcga_brca/prepared/clinical.rds",
+    "gene_sets_rds": "${OMICRAFT_WORKSPACE}/datasets/tcga_brca/prepared/gene_sets.rds",
+    "base_dir": "${OMICRAFT_WORKSPACE}/runs",
+    "sample_manifest": "${OMICRAFT_WORKSPACE}/datasets/tcga_brca/sample_manifest.json",
+    "chronos_path": "${OMICRAFT_WORKSPACE}/datasets/upstream_evidence/CRISPRGeneEffect.csv",
+    "demeter2_path": "${OMICRAFT_WORKSPACE}/datasets/upstream_evidence/D2_combined_gene_dep_scores.csv",
+    "model_meta_path": "${OMICRAFT_WORKSPACE}/datasets/upstream_evidence/Model.csv",
+    "hpa_path": "${OMICRAFT_WORKSPACE}/datasets/upstream_evidence/normal_ihc_data.tsv",
+    "expr_rds": "${OMICRAFT_WORKSPACE}/datasets/upstream_evidence/census/expression.rds",
+    "meta_rds": "${OMICRAFT_WORKSPACE}/datasets/upstream_evidence/census/metadata.rds"
+  },
+  "upstream": {
+    "rscript": "${OMICRAFT_WORKSPACE}/challenge/model_runtime/omics-r-env/bin/Rscript",
+    "cache_dir": "${OMICRAFT_WORKSPACE}/datasets/upstream_cache",
+    "depmap_release": "Chronos 24Q4 / DEMETER2 2018 (Figshare 6025238)",
+    "census_version": "2025-11-08",
+    "census_provenance_path": "${OMICRAFT_WORKSPACE}/datasets/upstream_evidence/census/provenance.json",
+    "max_candidates": 100,
+    "cpu_threads": 4,
+    "r_timeout": 14400,
+    "report_reference_run": ""
+  },
+  "agent_logging": true
+}

@@ -1,0 +1,1 @@
+"""Minimal ADMET prediction pipeline."""

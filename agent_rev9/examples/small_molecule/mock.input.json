@@ -1,0 +1,28 @@
+{
+  "route": "small_molecule",
+  "context": {
+    "gene_name": "SYNTHETIC",
+    "raw_receptor_path": "receptor.synthetic.pdb",
+    "target_chain": "A",
+    "target_sequence": "AAAA",
+    "docking_box": {
+      "center": [
+        2,
+        2,
+        4
+      ],
+      "size": [
+        14,
+        14,
+        14
+      ]
+    }
+  },
+  "candidates": [
+    {
+      "candidate_id": "synthetic_ethanol",
+      "smiles": "CCO",
+      "is_mock": true
+    }
+  ]
+}

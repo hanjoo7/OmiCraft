@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OmiCraft — Pipeline Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f1117;color:#e0e0e0;line-height:1.6}
+.header{background:#161b22;border-bottom:1px solid #30363d;padding:20px 32px;display:flex;align-items:flex-start;gap:20px}
+.header-left{flex:1}
+.logo{font-size:11px;color:#8b949e;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px}
+.title{font-size:24px;font-weight:800;color:#fff;margin-bottom:6px}
+.rq{font-size:13px;color:#8b949e;max-width:700px}
+.meta{display:flex;align-items:center;gap:12px;margin-top:10px;font-size:12px;color:#6e7681}
+.verdict{padding:3px 12px;border-radius:12px;font-weight:700;font-size:11px}
+.verdict.APPROVE{background:#238636;color:#fff}
+.verdict.HOLD{background:#6e7681;color:#fff}
+.print-btn{padding:8px 16px;background:#238636;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+.print-btn:hover{background:#2ea043}
+
+.toc{background:#161b22;border-bottom:1px solid #30363d;padding:10px 32px;display:flex;gap:24px}
+.toc a{font-size:12px;color:#58a6ff;text-decoration:none;font-weight:600}
+.toc a:hover{text-decoration:underline}
+
+.report-body{max-width:1280px;margin:0 auto;padding:32px}
+.section{margin-bottom:48px}
+.section h2{font-size:16px;font-weight:700;color:#fff;border-left:4px solid #58a6ff;padding-left:12px;margin-bottom:16px}
+.section-desc{font-size:12px;color:#8b949e;margin:-8px 0 16px;padding-left:16px}
+
+.stat-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.stat-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 18px;min-width:140px}
+.stat-card .label{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.08em}
+.stat-card .value{font-size:22px;font-weight:800;font-family:monospace;color:#58a6ff;margin-top:2px}
+.stat-card.up .value{color:#f85149}
+.stat-card.dn .value{color:#79c0ff}
+
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.chart-grid.wide{grid-template-columns:1fr}
+.chart-grid.tri{grid-template-columns:1fr 1fr 1fr}
+.chart-box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px}
+.chart-box h3{font-size:12px;font-weight:700;color:#8b949e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.chart-wrap{position:relative}
+
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{padding:8px 10px;text-align:left;background:#21262d;color:#8b949e;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #30363d}
+tbody tr{border-bottom:1px solid #21262d}
+tbody tr:hover{background:#21262d}
+tbody td{padding:7px 10px;color:#e0e0e0;vertical-align:middle}
+.tier-badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.tier-1A,.tier-1B{background:#238636;color:#fff}
+.tier-2A,.tier-2B{background:#f0883e;color:#000}
+.tier-3{background:#6e7681;color:#fff}
+.dep-badge{font-size:10px;padding:1px 7px;border-radius:8px;background:#21262d;color:#8b949e}
+.dep-badge.concordant{background:#238636;color:#fff}
+.dep-badge.crispr_only{background:#2f81f7;color:#fff}
+.dep-badge.discordant{background:#da3633;color:#fff}
+.ctx-badge{font-size:10px;padding:1px 7px;border-radius:8px;background:#21262d;color:#8b949e}
+.ctx-badge.tumor_origin{background:#8957e5;color:#fff}
+.loc-tag{display:inline-block;font-size:9px;padding:1px 5px;margin:1px;border-radius:4px;background:#21262d;color:#8b949e}
+
+.loading{text-align:center;color:#6e7681;padding:40px;font-size:13px}
+.err{color:#f85149;font-size:12px;padding:12px;background:#21262d;border-radius:4px;margin:8px 0}
+
+@media print{
+  body{background:#fff;color:#000}
+  .header{background:#fff;border-color:#ccc}
+  .print-btn,.toc{display:none}
+  .chart-box,.stat-card{background:#fff;border-color:#ccc}
+  .section h2{color:#000}
+  .logo,.rq,.meta{color:#444}
+  .stat-card .value{color:#1f6feb}
+  thead th{background:#f0f0f0;color:#444}
+  tbody td{color:#222}
+  .report-body{padding:0}
+  .section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="logo">OmiCraft &nbsp;|&nbsp; Drug Discovery AI Pipeline</div>
+    <h1 class="title">Pipeline Analysis Report</h1>
+    <p class="rq" id="rqText">데이터 로딩 중...</p>
+    <div class="meta">
+      <span id="dateText"></span>
+      <span class="verdict" id="verdictBadge"></span>
+    </div>
+  </div>
+  <button class="print-btn" onclick="window.print()">&#128438; Print / PDF</button>
+</div>
+
+<nav class="toc">
+  <a href="#s1">&#9312; Differential Expression</a>
+  <a href="#s2">&#9313; Sample QC (PCA)</a>
+  <a href="#s3">&#9314; Pathway Enrichment</a>
+  <a href="#s4">&#9315; Target Qualification</a>
+</nav>
+
+<div class="report-body">
+
+  <!-- Section 1: DEG -->
+  <div class="section" id="s1">
+    <h2>&#9312; Differential Expression Analysis (DESeq2)</h2>
+    <p class="section-desc">TNBC vs non-TNBC 비교 | DESeq2 결과 | |LFC| &gt; 1, FDR &lt; 0.05 기준</p>
+    <div class="stat-row" id="degStats"><div class="loading">로딩 중...</div></div>
+    <div class="chart-grid">
+      <div class="chart-box">
+        <h3>Volcano Plot</h3>
+        <div class="chart-wrap"><canvas id="volcanoChart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <h3>Top Upregulated Genes</h3>
+        <div id="topUpTable"><div class="loading">로딩 중...</div></div>
+        <h3 style="margin-top:16px">Top Downregulated Genes</h3>
+        <div id="topDnTable"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: PCA -->
+  <div class="section" id="s2">
+    <h2>&#9313; Sample Quality Control (PCA)</h2>
+    <p class="section-desc">log2 정규화 발현 행렬 기반 주성분 분석 | TNBC vs non-TNBC 분리도 확인</p>
+    <div class="chart-grid">
+      <div class="chart-box">
+        <h3>PCA — 샘플 분포</h3>
+        <div class="chart-wrap"><canvas id="pcaChart"></canvas></div>
+        <p id="pcaVar" style="font-size:11px;color:#6e7681;margin-top:8px;text-align:center"></p>
+      </div>
+      <div class="chart-box" id="pcaInfoBox">
+        <h3>분석 설정</h3>
+        <table>
+          <tr><td style="color:#8b949e">데이터</td><td>TCGA-BRCA (count matrix, top 1000 genes)</td></tr>
+          <tr><td style="color:#8b949e">전처리</td><td>log2(count + 1) 정규화</td></tr>
+          <tr><td style="color:#8b949e">그룹</td><td><span style="color:#f85149">TNBC</span> vs <span style="color:#79c0ff">Luminal / HER2</span></td></tr>
+          <tr><td style="color:#8b949e">알고리즘</td><td>sklearn PCA (n_components=2)</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: GSEA -->
+  <div class="section" id="s3">
+    <h2>&#9314; Pathway Enrichment Analysis (GSEA / aPEAR)</h2>
+    <p class="section-desc">MSigDB Hallmark + KEGG 기반 GSEA | FDR &lt; 0.25 유의 경로 | NES = Normalized Enrichment Score</p>
+    <div class="chart-grid wide">
+      <div class="chart-box">
+        <h3>Pathway NES (상위 16개)</h3>
+        <div class="chart-wrap"><canvas id="gseaChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Target Table -->
+  <div class="section" id="s4">
+    <h2>&#9315; Target Qualification Summary</h2>
+    <p class="section-desc">
+      scRNA-seq CELLxGENE 세포 맥락 &nbsp;|&nbsp; DepMap CRISPR Chronos 의존성 &nbsp;|&nbsp;
+      UniProt 세포내 위치 &nbsp;|&nbsp; ChEMBL/OpenTargets 근거 통합 Tier 판정
+    </p>
+    <div class="chart-box" id="targetTableWrap"><div class="loading">로딩 중...</div></div>
+  </div>
+
+</div><!-- /report-body -->
+
+<script>
+const COLORS = {up:'rgba(248,81,73,.7)', dn:'rgba(121,192,255,.7)', ns:'rgba(110,118,129,.25)',
+                tnbc:'rgba(248,81,73,.75)', non:'rgba(79,140,201,.75)'};
+
+async function load(){
+  document.getElementById('dateText').textContent = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+  let d;
+  try{ d = await fetch('/api/report' + location.search).then(r=>r.json()); }
+  catch(e){ document.querySelector('.report-body').innerHTML='<p class="err">데이터 로드 실패: '+e.message+'</p>'; return; }
+
+  if(renderTherapeuticRun(d)) return;
+  renderReportProvenance(d);
+
+  // Research question + verdict
+  if(d.research_question) document.getElementById('rqText').textContent = d.research_question;
+  if(d.final_verdict){
+    const vb = document.getElementById('verdictBadge');
+    vb.textContent = d.final_verdict; vb.className = 'verdict ' + d.final_verdict;
+  }
+
+  // === Section 1: DEG ===
+  if(d.deg_stats){
+    const s = d.deg_stats;
+    document.getElementById('degStats').innerHTML = `
+      <div class="stat-card"><div class="label">Total Genes</div><div class="value">${s.n_total.toLocaleString()}</div></div>
+      <div class="stat-card up"><div class="label">Upregulated</div><div class="value">${s.n_up.toLocaleString()}</div><div style="font-size:10px;color:#748397;margin-top:2px">LFC>${s.lfc_cut}, FDR<${s.fdr_cut}</div></div>
+      <div class="stat-card dn"><div class="label">Downregulated</div><div class="value">${s.n_down.toLocaleString()}</div><div style="font-size:10px;color:#748397;margin-top:2px">LFC<-${s.lfc_cut}, FDR<${s.fdr_cut}</div></div>
+    `;
+  } else {
+    document.getElementById('degStats').innerHTML = '<p class="err">DEG 데이터 없음</p>';
+  }
+
+  // Volcano chart
+  if(d.volcano){
+    const ups = d.volcano.filter(p=>p.s==='up');
+    const dns = d.volcano.filter(p=>p.s==='dn');
+    const nss = d.volcano.filter(p=>p.s==='ns');
+    new Chart(document.getElementById('volcanoChart'),{
+      type:'scatter',
+      data:{ datasets:[
+        {label:'Up ('+ups.length+')',  data:ups.map(p=>({x:p.x,y:p.y})), backgroundColor:COLORS.up,  pointRadius:3},
+        {label:'Down ('+dns.length+')',data:dns.map(p=>({x:p.x,y:p.y})), backgroundColor:COLORS.dn,  pointRadius:3},
+        {label:'NS',                   data:nss.map(p=>({x:p.x,y:p.y})), backgroundColor:COLORS.ns,  pointRadius:2},
+      ]},
+      options:{
+        plugins:{legend:{labels:{color:'#748397',boxWidth:10,font:{size:11}}},
+                 tooltip:{callbacks:{label:ctx=>{
+                   const src = ctx.datasetIndex===0?ups:ctx.datasetIndex===1?dns:nss;
+                   const p   = src[ctx.dataIndex];
+                   return (p?.g||'')+ ' | LFC:'+ctx.parsed.x+' | -log10p:'+ctx.parsed.y;
+                 }}}},
+        scales:{
+          x:{title:{display:true,text:'log2 Fold Change',color:'#748397'},grid:{color:'#e4eaf1'},ticks:{color:'#748397'}},
+          y:{title:{display:true,text:'-log10(padj)',color:'#748397'},grid:{color:'#e4eaf1'},ticks:{color:'#748397'}},
+        },
+        animation:{duration:400},
+      }
+    });
+  }
+
+  // Top gene tables
+  function geneTable(genes, dir){
+    if(!genes||!genes.length) return '<p class="err">데이터 없음</p>';
+    return '<table><thead><tr><th>Gene</th><th>LFC</th><th>FDR</th></tr></thead><tbody>'
+      +genes.map(g=>`<tr><td style="font-weight:700;color:${dir==='up'?'#f85149':'#79c0ff'}">${g.gene}</td><td style="font-family:monospace">${g.lfc}</td><td style="font-family:monospace;font-size:11px">${g.padj}</td></tr>`).join('')
+      +'</tbody></table>';
+  }
+  document.getElementById('topUpTable').innerHTML = geneTable(d.top_up,'up');
+  document.getElementById('topDnTable').innerHTML = geneTable(d.top_dn,'dn');
+
+  // === Section 2: PCA ===
+  if(d.pca){
+    const tnbc = d.pca.filter(p=>p.g==='TNBC');
+    const non  = d.pca.filter(p=>p.g==='nonTNBC');
+    new Chart(document.getElementById('pcaChart'),{
+      type:'scatter',
+      data:{ datasets:[
+        {label:'TNBC (n='+tnbc.length+')',   data:tnbc.map(p=>({x:p.x,y:p.y})), backgroundColor:COLORS.tnbc, pointRadius:5},
+        {label:'nonTNBC (n='+non.length+')', data:non.map(p=>({x:p.x,y:p.y})),  backgroundColor:COLORS.non,  pointRadius:5},
+      ]},
+      options:{
+        plugins:{legend:{labels:{color:'#748397',font:{size:11}}}},
+        scales:{
+          x:{title:{display:true,text:'PC1'+(d.pca_var?' ('+d.pca_var[0]+'%)':''),color:'#748397'},grid:{color:'#e4eaf1'},ticks:{color:'#748397'}},
+          y:{title:{display:true,text:'PC2'+(d.pca_var?' ('+d.pca_var[1]+'%)':''),color:'#748397'},grid:{color:'#e4eaf1'},ticks:{color:'#748397'}},
+        },
+        animation:{duration:400},
+      }
+    });
+    if(d.pca_var) document.getElementById('pcaVar').textContent =
+      'Explained variance: PC1 '+d.pca_var[0]+'%, PC2 '+d.pca_var[1]+'%';
+  } else {
+    document.getElementById('pcaChart').parentElement.innerHTML = '<p class="err">PCA 데이터 없음 — 카운트 행렬 필요</p>';
+  }
+
+  // === Section 3: GSEA ===
+  if(d.gsea && d.gsea.length){
+    const labels = d.gsea.map(g=>g.term);
+    const nes    = d.gsea.map(g=>g.nes);
+    const colors = nes.map(v=>v>0?COLORS.up:COLORS.dn);
+    new Chart(document.getElementById('gseaChart'),{
+      type:'bar',
+      data:{ labels, datasets:[{label:'NES',data:nes,backgroundColor:colors,borderRadius:3}]},
+      options:{
+        indexAxis:'y',
+        plugins:{legend:{display:false},
+                 tooltip:{callbacks:{label:ctx=>{
+                   const g=d.gsea[ctx.dataIndex];
+                   return 'NES: '+g.nes+' | FDR: '+g.fdr;
+                 }}}},
+        scales:{
+          x:{title:{display:true,text:'NES',color:'#748397'},grid:{color:'#e4eaf1'},ticks:{color:'#748397'}},
+          y:{ticks:{color:'#e0e0e0',font:{size:11}},grid:{color:'#e4eaf1'}},
+        },
+        animation:{duration:400},
+      }
+    });
+  } else {
+    document.getElementById('gseaChart').parentElement.innerHTML = '<p class="err">GSEA 데이터 없음</p>';
+  }
+
+  // === Section 4: Target table ===
+  if(d.advance_targets && d.advance_targets.length){
+    const rows = d.advance_targets.map(t=>{
+      const tierCls = 'tier-'+t.tier.replace(/\s/g,'');
+      const depCls  = 'dep-badge '+(t.depmap||'').toLowerCase().replace(/[^a-z_]/g,'');
+      const ctxCls  = 'ctx-badge '+(t.cell_ctx||'').toLowerCase().replace(/[^a-z_]/g,'');
+      const locs    = (t.location||[]).slice(0,2).map(l=>`<span class="loc-tag">${l}</span>`).join('');
+      return `<tr>
+        <td style="font-weight:700;color:#58a6ff">${t.gene}</td>
+        <td><span class="tier-badge ${tierCls}">${t.tier||'—'}</span></td>
+        <td style="font-family:monospace;color:#748397">${t.bio_conf||'—'}</td>
+        <td style="font-size:11px">${t.modality||'—'}</td>
+        <td>${locs||'<span style="color:#748397;font-size:11px">—</span>'}</td>
+        <td><span class="${depCls}">${t.depmap||'—'}</span></td>
+        <td>${t.chronos!=null&&t.chronos!==''?'<span style="font-family:monospace;font-size:11px">'+t.chronos+'%</span>':'—'}</td>
+        <td><span class="${ctxCls}">${t.cell_ctx||'—'}</span></td>
+        <td style="font-size:11px;color:#748397">${t.direction||'—'}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('targetTableWrap').innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Gene</th><th>Tier</th><th>Bio Conf</th><th>Modality</th>
+          <th>Subcellular Location</th><th>DepMap</th><th>CRISPR%</th>
+          <th>Cell Context</th><th>Direction</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  } else {
+    document.getElementById('targetTableWrap').innerHTML = '<p class="err">파이프라인을 먼저 실행하세요 (Run Pipeline)</p>';
+  }
+}
+
+load();
+</script>
+</body>
+</html>

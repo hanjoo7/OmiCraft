@@ -1,0 +1,390 @@
+<script>
+function renderReportProvenance(d){
+  if(!d.provenance) return;
+  const box=document.createElement('p');
+  box.style.cssText='padding:12px;font-size:12px';
+  box.textContent='Data scope: '+d.provenance.volcano_sampling+' | PCA: '+d.provenance.pca_sampling;
+  (document.querySelector('.report-body')||document.querySelector('.content')||document.body).prepend(box);
+}
+function renderVisualDiagnostic(d){
+  document.body.replaceChildren();document.body.id='visual-diagnostic';document.title='OmiCraft | Visual diagnostics';
+  window.diagnosticErrors=window.diagnosticErrors||[];
+  window.addEventListener('error',e=>window.diagnosticErrors.push(e.message));
+  window.addEventListener('unhandledrejection',e=>window.diagnosticErrors.push(String(e.reason)));
+  const css=document.createElement('style');css.textContent=`
+  #visual-diagnostic{margin:0;background:#f2f5f8;color:#20324a;font:15px/1.55 system-ui,sans-serif}
+  #visual-diagnostic *{box-sizing:border-box}#visual-diagnostic .vd-top{background:#152b46;color:#fff;padding:17px 32px;display:flex;justify-content:space-between;align-items:center}
+  #visual-diagnostic main{max-width:1240px;margin:auto;padding:24px 28px 60px}#visual-diagnostic h1{font-size:30px;line-height:1.25;margin:0 0 8px}
+  #visual-diagnostic h2{font-size:23px;margin:0 0 12px}#visual-diagnostic h3{font-size:17px;margin:0 0 8px}
+  #visual-diagnostic p{margin:6px 0 12px}#visual-diagnostic .muted{color:#607084}#visual-diagnostic .vd-meta{font-size:13px;overflow-wrap:anywhere}
+  #visual-diagnostic .vd-badges{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}#visual-diagnostic .badge{font-size:12px;font-weight:650;background:#e8edf3;color:#364b63;border-radius:5px;padding:4px 8px;display:inline-block}
+  #visual-diagnostic .warn{background:#fff0d7;color:#865206}#visual-diagnostic .pass{background:#e4f2e9;color:#1d633b}#visual-diagnostic .fail{background:#fce8e6;color:#9a3028}
+  #visual-diagnostic .vd-stats{display:flex;gap:24px;flex-wrap:wrap;margin:16px 0;font-size:14px}#visual-diagnostic .vd-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:16px 0}
+  #visual-diagnostic .vd-card,#visual-diagnostic section,#visual-diagnostic .vd-priority{background:#fff;border:1px solid #d6dee8;border-radius:10px;padding:18px}
+  #visual-diagnostic .vd-card{font-size:13px;min-width:0}#visual-diagnostic .vd-card .result{font-size:15px;font-weight:650;margin:10px 0}
+  #visual-diagnostic .vd-priority{border-left:4px solid #c18129;margin:16px 0}#visual-diagnostic .vd-priority p{margin:3px 0;font-size:13px}
+  #visual-diagnostic .vd-flow{font-size:12px;padding:12px 0;display:flex;gap:6px;flex-wrap:wrap}#visual-diagnostic .vd-flow span{background:#e7edf4;padding:6px 9px;border-radius:5px}
+  #visual-diagnostic nav{display:flex;flex-wrap:wrap;gap:6px;position:sticky;top:0;background:#f2f5f8;padding:12px 0;z-index:4;border-bottom:1px solid #d6dee8;margin-bottom:18px}
+  #visual-diagnostic button{border:1px solid #c5d0de;background:#fff;color:#28425d;font:inherit;font-size:13px;border-radius:6px;padding:8px 13px;cursor:pointer}
+  #visual-diagnostic button[aria-selected=true]{background:#203e60;color:#fff}#visual-diagnostic section{margin:0 0 18px;scroll-margin-top:75px}
+  #visual-diagnostic [hidden]{display:none!important}#visual-diagnostic figure{margin:20px 0;border:1px solid #dce3eb;border-radius:8px;overflow:hidden;background:#fff}
+  #visual-diagnostic figure img{display:block;width:100%;height:auto}#visual-diagnostic figcaption{padding:12px 16px;background:#f8fafc;font-size:13px}#visual-diagnostic figure a{margin-right:14px}
+  #visual-diagnostic a{color:#225d8b;text-decoration:underline}#visual-diagnostic details{border:1px solid #dce3eb;border-radius:7px;padding:10px 13px;margin:12px 0}#visual-diagnostic summary{cursor:pointer;font-weight:600}
+  #visual-diagnostic .table-wrap{max-width:100%;overflow:auto}#visual-diagnostic table{width:100%;border-collapse:collapse;font-size:12px;margin:12px 0}
+  #visual-diagnostic th{background:#eef2f6;text-align:left;color:#304860}#visual-diagnostic td,#visual-diagnostic th{padding:9px;border-bottom:1px solid #e0e6ed;vertical-align:top;overflow-wrap:anywhere}
+  #visual-diagnostic pre{font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:500px;overflow:auto}
+  #visual-diagnostic .vd-status{padding:14px;background:#eef2f6;border-radius:6px;margin:12px 0;font-size:13px}#visual-diagnostic .vd-issues th:nth-child(4){min-width:180px}
+  @media(max-width:850px){#visual-diagnostic .vd-cards{grid-template-columns:repeat(2,minmax(0,1fr))}#visual-diagnostic main{padding:18px}#visual-diagnostic h1{font-size:25px}}
+  `;document.head.append(css);
+  const el=(p,t,text,cls)=>{const n=document.createElement(t);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;p.append(n);return n;};
+  const safe=v=>{if(v===null||v===undefined||v==='')return 'not_available';if(typeof v==='number')return Number.isFinite(v)?String(Math.round(v*10000)/10000):'not_available';if(typeof v==='object')return JSON.stringify(v,(k,x)=>typeof x==='string'?clean(x):x,null,2);return clean(String(v));};
+  const clean=v=>v.replace(/\/(?:NHNHOME|home|tmp)\/[^\s"',;]+/g,x=>x.split('/').pop());
+  const badge=(p,v)=>el(p,'span',safe(v),'badge '+(/FAIL|ERROR/.test(v)?'fail':/HOLD|WARN/.test(v)?'warn':/^PASS/.test(v)?'pass':''));
+  const detail=(p,label,obj)=>{const x=el(p,'details');el(x,'summary',label);if(obj!==undefined)el(x,'pre',safe(obj));return x;};
+  const table=(p,rows,cols)=>{const w=el(p,'div',undefined,'table-wrap'),t=el(w,'table'),h=el(t,'thead'),tr=el(h,'tr');cols.forEach(c=>el(tr,'th',c[0]));const body=el(t,'tbody');rows.forEach(r=>{const tr=el(body,'tr');cols.forEach(c=>el(tr,'td',safe(typeof c[1]==='function'?c[1](r):r[c[1]])));});return t;};
+  const art=path=>(d.artifacts||[]).find(a=>a.path===path);
+  const link=(p,path,label)=>{const a=art(path);if(a&&a.available&&a.href){const x=el(p,'a',label);x.href=a.href;return x;}return el(p,'span',label+' · source unavailable','muted');};
+  const top=el(document.body,'header',undefined,'vd-top');el(top,'strong','OmiCraft / Diagnostic review');el(top,'span','REAL RESULTS · NO MOCK DATA','vd-meta');
+  const main=el(document.body,'main'),s=d.summary||{},mods=s.modalities||[],attempts=s.attempts||[],issues=s.issues||[];
+  el(main,'h1','ERBB2 · Four-modality diagnostics');el(main,'p',s.disease_context,'muted');el(main,'div','Run '+d.run_id,'vd-meta');
+  const badges=el(main,'div',undefined,'vd-badges');badge(badges,'Competition demo: '+d.demo_pipeline_status);badge(badges,'Scientific validation: '+d.scientific_validation_status);badge(badges,'Comparative review · no clinical selection');
+  const current=attempts.filter(a=>!a.historical),historical=attempts.filter(a=>a.historical),stats=el(main,'div',undefined,'vd-stats');
+  el(stats,'span',current.length+' new analysis attempts · '+s.heavy_model_inference_calls+' new model calls');el(stats,'span',historical.length+' historical records retained');el(stats,'span',current.filter(a=>a.status==='COMPLETED').length+' completed / '+current.filter(a=>a.status==='FAILED').length+' failed / '+mods.filter(m=>m.display_execution_status==='BLOCKED_INPUT').length+' blocked route');
+  const gpuLines=(s.gpu?.snapshot?.stdout||'').trim().split('\n').slice(1).map(x=>x.split(',').map(y=>y.trim())).filter(x=>[4,5,6,7].includes(Number(x[0])));el(main,'p','GPU snapshot: '+gpuLines.map(x=>'GPU '+x[0]+' '+x[3]+' MiB / '+x[5]+'%').join(' · ')+'. New GPU processes: 0.','vd-meta');
+  const names={SMALL_MOLECULE:'Small molecule',DE_NOVO_BINDER:'Binder',ADC:'ADC',DEGRADER:'Degrader'};
+
+  const cards=el(main,'div',undefined,'vd-cards');mods.forEach(m=>{const c=el(cards,'article',undefined,'vd-card');el(c,'h3',names[m.modality]);badge(c,m.display_execution_status);badge(c,m.critic_decision);const mm=m.demo_metrics||{};const brief=!Object.keys(mm).length?'Diagnostic data unavailable':m.modality==='SMALL_MOLECULE'?`${mm.poses?.length||0} GNINA poses · ${m.summary?.candidates?.[0]?.af3_ligand?.samples?.length||0} AF3 sample(s) · ${mm.admet_endpoints?.length||0} ADMET endpoints`:m.modality==='DE_NOVO_BINDER'?`iPTM ${safe(mm.iptm)} · ${mm.developability?.length||0} residue binder`:m.modality==='ADC'?`${safe(mm.contact_count)} CDR contacts · ${mm.conjugation?.candidates?.length||0} computational site candidates`:mm.input_mode==='published_full_molecule'?`${mm.candidate_id} · Published reference · Full-molecule QC ${mm.full_molecule_validation}`:'Real warhead QC · assembly blocked by missing inputs';el(c,'div',brief,'result');if(mm.input_mode==='published_full_molecule'){badge(c,'PUBLISHED DEGRADER');el(c,'p','Assembly: '+mm.assembly_status+' · Ternary: '+mm.ternary_status);}el(c,'p',(m.evidence_modes||[]).map(x=>x.replaceAll('_',' ')).join(' + '),'muted');el(c,'p','Tools: '+(m.selected_tools||[]).join(' → '));el(c,'div',current.filter(a=>a.modality===m.modality).length+' new analysis · '+historical.filter(a=>a.modality===m.modality&&a.kind==='model_inference').length+' replayed model records');el(c,'p',m.issues?.find(i=>i.status==='OPEN')?.observed_evidence||'No technical blocker recorded.');});
+  const priorities=el(main,'div',undefined,'vd-priority');el(priorities,'strong','Review priorities');issues.filter(i=>i.status==='OPEN'&&i.priority!=='P2').slice(0,4).forEach(i=>el(priorities,'p',i.priority+' · '+i.modality+' — '+i.observed_evidence));
+  const flow=el(main,'div',undefined,'vd-flow');['User question · ERBB2','Omics discovery · SOURCE MISSING','Qualification · NOT EVALUATED','Modality evaluation · comparative','Tool planning · replay / CPU analysis','Tool execution · real artifacts','Validation · complete','Critic · HOLD / warnings'].forEach(x=>el(flow,'span',x));
+  const nav=el(main,'nav');nav.setAttribute('role','tablist');nav.setAttribute('aria-label','Diagnostic sections');
+  const panels={},buttons={};
+  function tab(name){const id=name.toLowerCase().replaceAll(' ','-'),b=el(nav,'button',name),p=el(main,'section');b.setAttribute('role','tab');b.id='tab-'+id;b.setAttribute('aria-controls','panel-'+id);p.id='panel-'+id;p.setAttribute('role','tabpanel');p.setAttribute('aria-labelledby',b.id);buttons[name]=b;panels[name]=p;el(p,'h2',name);b.onclick=()=>show(name);return p;}
+  function show(name){for(const [key,p] of Object.entries(panels)){p.hidden=name!=='All sections'&&key!==name;buttons[key].setAttribute('aria-selected',String(key===name));}all.setAttribute('aria-selected',String(name==='All sections'));}
+  const om=tab('Omics');el(om,'p','Existing TCGA/Qualification evidence is kept separate from the therapeutic run. No new Omics analysis was run.');
+  table(om,s.omics||[],[['View','name'],['Status','status'],['Source run','source_run_id'],['Reason','reason']]);el(om,'div',s.qualification_status,'vd-status');
+  function issuesTable(parent,rows){const t=table(parent,rows,[['Priority','priority'],['Modality / stage',r=>r.modality+' / '+r.stage],['Category','category'],['Evidence','observed_evidence'],['Confirmed cause','confirmed_cause'],['Recommended fix','recommended_fix'],['Status','status']]);t.className='vd-issues';rows.filter(r=>r.hypothesized_cause).forEach(r=>{const box=el(parent,'div',undefined,'vd-status');badge(box,'Hypothesis');el(box,'span',' '+r.issue_id+': '+r.hypothesized_cause);});}
+  function attemptsTable(parent,rows){table(parent,rows,[['Attempt','attempt_id'],['Tool / stage',r=>r.tool+' / '+r.stage],['Mode',r=>r.evidence_mode+(r.historical?' (historical)':'')],['Seed','seed'],['GPU physical / logical',r=>r.physical_gpu_id==null?'CPU / not allocated':r.physical_gpu_id+' / '+r.logical_gpu_id],['Started','started_at'],['Finished','finished_at'],['Exit','exit_code'],['Status','status'],['Representative',r=>(r.selected?'Yes: ':'No: ')+r.selection_reason],['Metrics','metrics'],['Error','error_message']]);}
+  function renderReference(p,m){
+    const v=m.demo_metrics,q=v.qc||{},prov=v.provenance||{},bs=el(p,'div',undefined,'vd-badges');
+    ['PUBLISHED DEGRADER','CURATED REFERENCE CANDIDATE','NOT A NOVEL AGENT-DESIGNED MOLECULE'].forEach(x=>badge(bs,x));
+    el(p,'h3','SJF1528 · Published HER2/EGFR degrader');el(p,'p','Origin: Published reference · Target context: HER2/EGFR · E3 ligase: VHL · Input mode: Full molecule · Novel design: No');
+    (m.visualizations||[]).forEach(path=>{const a=art(path);if(!a?.available)return;const f=el(p,'figure'),im=el(f,'img');im.src=a.href;im.alt=a.title;const cap=el(f,'figcaption');el(cap,'strong',a.title);el(cap,'p',a.caption);link(cap,a.source_table,'RDKit source data');});
+    el(p,'h3','Molecular properties');table(p,[q],[['Formula','molecular_formula'],['MW (g/mol)','molecular_weight'],['Charge','formal_charge'],['Stereocenters','stereocenter_count'],['HBD / HBA',r=>r.hbd+' / '+r.hba],['Rotatable bonds','rotatable_bonds'],['TPSA (Å²)','tpsa'],['logP','logp'],['Rings','ring_count']]);
+    el(p,'p','Property profile: '+q.property_profile+'. A beyond-Rule-of-Five profile is a development warning, not evidence of degradation failure.');
+    table(p,[q],[['Conformer','conformer_generation_status'],['Force field','force_field'],['Optimization','optimization_status'],['Hydrogens before / after',r=>r.hydrogen_count_before+' / '+r.hydrogen_count_after],['Force-field energy (kcal/mol)','energy_if_available']]);
+    el(p,'h3','Literature and current calculation');el(p,'p','The primary publication reports an RTK degrader affecting HER2 and EGFR. This run checks chemical identity and prepares a free conformer; it does not measure degradation.');
+    const cite=el(p,'a','Primary publication · DOI '+prov.primary_doi);cite.href='https://doi.org/'+prov.primary_doi;el(p,'p',prov.curation_message);detail(p,'Chemical provenance and unmodified input',prov);
+    el(p,'h3','Component and assembly status');el(p,'div','Component decomposition: NOT VERIFIED · Assembly: NOT APPLICABLE FOR FULL-MOLECULE INPUT','vd-status');table(p,Object.entries(v.fields||{}).map(([field,value])=>({field,status:value===null?'NOT AVAILABLE':'SUPPLIED, NOT VERIFIED'})),[['Field','field'],['Status','status']]);
+    el(p,'h3','Ternary readiness');el(p,'div',v.ternary_status+' · AF3: NOT RUN · Degradation efficacy: NOT EVALUATED','vd-status');el(p,'p',v.ternary_readiness?.reason);table(p,v.ternary_readiness?.sequences||[],[['Entity','entity'],['Local selected input verified','available'],['Chain','chain'],['Residues','sequence_length']]);detail(p,'Readiness checks',v.ternary_readiness);
+    el(p,'h3','Selection and execution trace');table(p,m.decision_trace||[],[['Stage','stage'],['Execution mode','mode'],['Reason','message']]);
+    const old=detail(p,'Previous attempt: TAK-285-only input · BLOCKED_INPUT',m.previous_attempt);link(old,m.previous_attempt_path,'Original blocked attempt');el(p,'p','TAK-285 remains the Small molecule candidate. TAK-285 degrader design: NOT EVALUATED.');
+  }
+  mods.forEach(m=>{const p=tab(names[m.modality]),metrics=m.demo_metrics||{};el(p,'p',m.agent_reason||'Inspect the recorded technical failure before retrying.');el(p,'p','Selected tools: '+(m.selected_tools||[]).join(' → '));
+    const bs=el(p,'div',undefined,'vd-badges');badge(bs,'Execution: '+m.display_execution_status);badge(bs,'Validation: '+m.validation_decision);badge(bs,'Critic: '+m.critic_decision);
+    el(p,'p','Representative rule: valid artifact → most complete required metrics → earliest valid attempt. Scores do not select the diagnostic representative.','vd-meta');
+    attemptsTable(detail(p,'All attempts, including historical failures'),m.attempts||[]);
+    if(m.modality==='SMALL_MOLECULE'){el(p,'div',metrics.cross_seed_status,'vd-status');table(p,metrics.fresh_comparisons||[],[['Pose','pose_rank'],['AF3 seed','seed'],['Sample','sample'],['Ligand RMSD Å','heavy_atom_rmsd_angstrom'],['Receptor CA RMSD Å','receptor_ca_rmsd_angstrom'],['Mapped residues','receptor_matched_residues']]);}
+    if(m.modality==='DE_NOVO_BINDER'){el(p,'div','RFD3 backbone → ProteinMPNN sequence → AF3 complex → interface QC → developability screening','vd-status');table(p,[{iptm:metrics.iptm,ptm:metrics.ptm,score:metrics.protein_mpnn_score,contacts:metrics.interface?.interface_contact_count}],[['iPTM','iptm'],['pTM','ptm'],['ProteinMPNN design score (not affinity)','score'],['Interface atom contacts','contacts']]);el(p,'p','Warnings: '+(metrics.developability?.warnings||[]).join(', '));}
+    if(m.modality==='ADC'){el(p,'div','Computationally ranked conjugation-site candidates. No experimentally validated site is claimed. Linker/payload: NOT CONFIGURED · DAR: NOT RUN · internalization/cytotoxicity: NOT EVALUATED','vd-status');}
+    if(m.modality==='DEGRADER'&&metrics.input_mode==='published_full_molecule')renderReference(p,m);
+    if(m.modality==='DEGRADER'&&metrics.input_mode!=='published_full_molecule'){table(p,metrics.readiness||[],[['Component / field','input'],['Status','status']]);el(p,'div','Assembly: BLOCKED_INPUT · Geometry: NOT RUN · Ternary prediction: NOT RUN. Reference positive control is excluded.','vd-status');detail(p,'Required explicit input schema',{warhead_smiles:metrics.warhead_smiles,e3_ligand_smiles:null,linker_smiles:null,warhead_map:null,e3_map:null,linker_maps:[null,null]});}
+    (metrics.input_mode==='published_full_molecule'?[]:m.visualizations||[]).forEach(path=>{const a=art(path);if(!a?.available)return;const f=el(p,'figure'),img=el(f,'img');img.src=a.href;img.alt=a.title;const cap=el(f,'figcaption');el(cap,'strong',a.title+' · FRESH ANALYSIS');el(cap,'p',a.caption);(a.source_tables||[a.source_table]).forEach((src,i)=>link(cap,src,'Source '+(i+1)));});
+    if(m.modality==='SMALL_MOLECULE')table(detail(p,'All ADMET endpoints and available/missing status'),metrics.admet_endpoints||[],[['Endpoint','endpoint_name'],['Value','endpoint_value'],['Unit','endpoint_unit'],['Status','value_status']]);
+    if(m.modality==='ADC')table(detail(p,'All computational conjugation candidates'),metrics.conjugation?.candidates||[],[['Rank','review_rank'],['Chain','chain'],['Residue',r=>r.residue+r.residue_id],['SASA Å²','sasa_angstrom2'],['CDR distance Å','cdr_distance_angstrom'],['Interface distance Å','interface_distance_angstrom'],['Excluded reasons','exclusion_reasons'],['Position',r=>[r.x,r.y,r.z]]]);
+    detail(p,'Metrics, source linkage and parser checks',{metrics,checks:m.diagnostic_checks});detail(p,'Validation and Critic evidence',{validation:m.validation,critic:m.critic});issuesTable(p,m.issues||[]);
+  });
+  const ip=tab('Issues');el(ip,'p','P0 blocks execution/reporting. P1 affects interpretation or demo quality. P2 is follow-up scientific work. Confirmed and hypothetical causes are kept separate.');issuesTable(ip,issues);
+  const prov=tab('Provenance');el(prov,'p','Therapeutic source: '+s.therapeutic_source_run_id+' · Prior competition report: '+s.competition_source_run_id);el(prov,'p','REAL ARTIFACT REPLAY = prior real outputs; FRESH ANALYSIS = new CPU calculations and plots; FRESH INFERENCE = new model execution (0). REFERENCE DEMO is not used.');
+  mods.filter(m=>m.previous_attempt).forEach(m=>{const old=detail(prov,'Previous Degrader attempt · TAK-285-only input · BLOCKED_INPUT',m.previous_attempt);link(old,m.previous_attempt_path,'Preserved attempt');detail(prov,'Curated ingestion versus runtime selection',m.decision_trace);});
+  detail(prov,'GPU snapshot and process ownership',s.gpu);detail(prov,'Representative policy',s.representative_policy);attemptsTable(detail(prov,'Complete historical and current attempt manifest'),attempts);
+  const checks=(s.artifact_checks||[]).map(a=>({...a,filename:a.path?.split('/').pop()}));table(detail(prov,'Artifact checksums, sizes and parser results'),checks,[['File','filename'],['Bytes','size_bytes'],['SHA256','sha256'],['Checksum','checksum_status'],['Parsed','parser_success'],['Source run','source_run_id']]);
+  const links=detail(prov,'Download figures, source tables, structures and manifests');(d.artifacts||[]).forEach(a=>{const line=el(links,'p');link(line,a.path,a.title||a.path.split('/').pop());el(line,'span',' · '+a.execution_mode,'muted');});
+  const all=el(nav,'button','All sections');all.id='show-all';all.onclick=()=>show('All sections');show('Small molecule');return true;
+}
+
+function renderCompetitionDemo(d){
+  const host=document.querySelector('.report-body')||document.querySelector('.content')||document.body;
+  host.replaceChildren();host.id='competition-demo';
+  document.title='OmiCraft · Competition demo';
+  const title=document.querySelector('.title');if(title)title.textContent='OmiCraft · Competition demo';
+  const rq=document.querySelector('.rq');if(rq)rq.textContent='Comparative tool demonstration · No clinical or scientific selection';
+  const style=document.createElement('style');style.textContent=`
+    #competition-demo{max-width:1280px;margin:auto;padding:24px;color:#dee7ef;font:14px/1.55 system-ui}
+    #competition-demo h2{font-size:23px;margin:20px 0 12px;color:#fff}
+    #competition-demo h3{font-size:18px;margin:18px 0 10px;color:#dcecf2}
+    #competition-demo .cards,#competition-demo .figures{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:16px 0}
+    #competition-demo .card,#competition-demo section{background:#141f2b;border:1px solid #344455;border-radius:12px;padding:20px;margin-bottom:18px}
+    #competition-demo .card strong{display:block;color:#71d7c4;font-size:18px}
+    #competition-demo table{width:100%;border-collapse:collapse;margin:14px 0;font-size:12px}
+    #competition-demo th,#competition-demo td{border-bottom:1px solid #344455;text-align:left;padding:9px;vertical-align:top;overflow-wrap:anywhere}
+    #competition-demo th{color:#9fbac8} #competition-demo figure{margin:0;background:#fff;border-radius:8px;overflow:hidden;color:#233243}
+    #competition-demo img{display:block;width:100%;height:auto} #competition-demo figcaption{padding:12px;font-size:12px}
+    #competition-demo a{color:#56aaee} #competition-demo figure a{color:#176095}
+    #competition-demo details{border-top:1px solid #344455;padding:12px 0} #competition-demo pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px}
+    #competition-demo .status{padding:12px;border-left:3px solid #daa35d;background:#1f2933;margin:10px 0}
+    #competition-demo .flow{color:#8ed4c5;line-height:2} #competition-demo .scroll{overflow-x:auto}
+  `;host.appendChild(style);
+  const add=(parent,tag,text,cls)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;parent.appendChild(el);return el;};
+  const value=v=>v===null||v===undefined?'not_available':Array.isArray(v)?v.map(value).join(', '):typeof v==='object'?JSON.stringify(v):String(v);
+  const table=(parent,rows,fields)=>{const wrap=add(parent,'div',undefined,'scroll');const t=add(wrap,'table');const h=add(t,'tr');fields.forEach(k=>add(h,'th',k));rows.forEach(row=>{const tr=add(t,'tr');fields.forEach(k=>add(tr,'td',value(row[k])));});return t;};
+  const detail=(parent,label,data)=>{const box=add(parent,'details');add(box,'summary',label);add(box,'pre',JSON.stringify(data,null,2));return box;};
+  const section=(name,id)=>{const s=add(host,'section');s.id=id;add(s,'h2',name);return s;};
+  const modalities=d.summary?.modalities||[];
+  const status=section('Competition demo status','demo-status');
+  add(status,'p','Competition demo pipeline: '+d.demo_pipeline_status);
+  add(status,'p','Scientific validation: '+d.scientific_validation_status);
+  add(status,'p','Run: '+d.run_id+' · is_mock=false · Heavy model inference calls: '+value(d.summary?.heavy_model_inference_calls));
+  add(status,'p','Selection: '+d.selection_mode+' · clinical_or_scientific_selection=false','status');
+  add(status,'p','Execution modes: REAL_ARTIFACT_REPLAY = existing real model outputs; FRESH_INFERENCE = new lightweight calculations; REFERENCE_DEMO = explicitly labelled reference; NOT_RUN = no execution.');
+  const qualification=section('Qualification and modality assessment','demo-qualification');
+  table(qualification,d.summary?.qualification||[],['gene_name','tier','qualification_status']);
+  add(qualification,'p','A missing Qualification tier is not inferred. Showcase compares feasibility; ordinary execution still requires explicit user selection.');
+  const tools=section('Agent Tool selection','demo-tools');
+  table(tools,modalities,['modality','agent_reason','tool_order','readiness_result','execution_result','validation_result','critic_result']);
+  const cards=add(host,'div',undefined,'cards');
+  for(const r of modalities){const card=add(cards,'div',undefined,'card');add(card,'strong',r.modality);add(card,'p','Demo '+r.demo_pipeline_status+' · '+r.modality_execution_status);add(card,'p','Scientific decision: '+r.critic_decision);add(card,'p',r.real_tool_execution_status);}
+  for(const r of modalities){
+    const s=section(r.modality,'demo-'+r.modality.toLowerCase());const m=r.demo_metrics||{};
+    add(s,'p','Demo: '+r.demo_pipeline_status+' · Modality: '+r.modality_execution_status+' · Source mode: '+r.real_tool_execution_status);
+    add(s,'p',(r.selected_tools||[]).join(' → '),'flow');
+    if(r.lightweight_calculations?.length)add(s,'p','New lightweight calculations: '+r.lightweight_calculations.map(x=>x.tool+' ['+x.execution_mode+']').join('; '));
+    const stages=(d.stages||[]).filter(x=>x.modality===r.modality);
+    table(s,stages,['stage','status','message']);
+    const figures=add(s,'div',undefined,'figures');
+    for(const a of d.artifacts||[]){if(a.modality!==r.modality||a.artifact_type!=='plot'||!a.available)continue;
+      const f=add(figures,'figure');const img=add(f,'img');img.src=a.href;img.alt=a.title;img.loading='eager';
+      const caption=add(f,'figcaption',a.title+' — '+a.caption+' ['+a.execution_mode+']');
+      const source=(d.artifacts||[]).find(x=>x.path===a.source_table);if(source?.available){add(caption,'br');const link=add(caption,'a','Source table / structure');link.href=source.href;}
+    }
+    const structures=(d.artifacts||[]).filter(a=>a.modality===r.modality&&a.artifact_type==='structure'&&a.available);
+    if(structures.length){const links=add(s,'p','Structure artifacts: ');for(const a of structures){const link=add(links,'a',a.title||a.label);link.href=a.href;add(links,'span',' · ');}}
+    if(r.modality==='SMALL_MOLECULE'){
+      table(s,m.pose_qc||[],['pose_rank','pocket_occupancy','contact_residue_count','severe_clash_count','pose_qc_status']);
+      add(s,'p','Consensus: '+value(m.consensus)+' · AF3 ligand pLDDT: '+value(m.af3_plddt),'status');
+      detail(s,'Hydrogen and protonation preparation records',m.preparation);
+      add(s,'h3','ADMET highlights');add(s,'p','Available: '+value(m.available_endpoint_count)+' · Missing: '+value(m.missing_endpoint_count)+' · '+value(m.admet_scope));
+      table(s,m.admet_core||[],['endpoint','value','unit','status']);
+      add(s,'p','Protonation: supplied state preserved; no pH prediction. Receptor hydrogen and charge limitations remain in provenance.');
+    }else if(r.modality==='DE_NOVO_BINDER'){
+      const dev=m.developability||{};
+      table(s,[{iPTM:m.iptm,pTM:m.ptm,contacts:m.interface?.interface_contact_count,minimum_distance_A:m.interface?.min_interchain_distance_angstrom,hotspot:m.interface?.hotspot_preserved}],['iPTM','pTM','contacts','minimum_distance_A','hotspot']);
+      add(s,'p','Interface PAE minima: '+value(m.interface_pae_min)+' · Hotspot distance: '+value(m.interface?.hotspot_distances_angstrom));
+      add(s,'p','Structural screening: '+value(m.structural_screening)+' · Developability screening: '+value(dev.status),'status');
+      table(s,[dev],['length','hydrophobic_fraction','net_charge_ph7','estimated_pI','cysteine_count','low_confidence_residue_fraction']);
+      add(s,'p','Warnings: '+value(dev.warnings?.length?dev.warnings:'none from these rules'));
+      add(s,'p','Surface hydrophobic patch: '+value(dev.exposed_hydrophobic_patch));
+      add(s,'p','ProteinMPNN score: '+value(m.protein_mpnn_score)+' — '+value(m.protein_mpnn_score_meaning));
+      add(s,'p','Experimental binding: NOT_EVALUATED · Experimental developability: NOT_EVALUATED · Protenix: not_used');
+      detail(s,'Developability rules, motifs and composition',dev);
+    }else if(r.modality==='ADC'){
+      add(s,'p','Mapping coverage: '+value(m.mapping_coverage)+' · CDR contacts: '+value(m.contact_count)+' · Clash: '+value(m.clash_count));
+      const rows=m.conjugation?.candidates||[];table(s,rows.slice(0,8),['review_rank','chain','residue','residue_id','cdr_distance_angstrom','interface_distance_angstrom','sasa_angstrom2','exclusion_reasons']);
+      add(s,'p','No conjugation site selected. SASA and distance provide review priority; experimental accessibility: NOT_EVALUATED.');
+      add(s,'p','Linker/payload: '+value(m.linker_payload)+' · DAR: '+value(m.DAR)+' · Internalization: '+value(m.internalization),'status');
+      detail(s,'All mapped conjugation candidates',rows);
+    }else if(m.input_mode==='published_full_molecule'){
+      add(s,'h3','SJF1528 · Published HER2/EGFR degrader');
+      add(s,'p','PUBLISHED DEGRADER · CURATED REFERENCE CANDIDATE · NOT A NOVEL AGENT-DESIGNED MOLECULE','status');
+      add(s,'p','Full molecule QC: '+m.full_molecule_validation+' · Assembly: '+m.assembly_status+' · Ternary: '+m.ternary_status);
+      add(s,'p','E3 ligase: VHL · Component decomposition: NOT VERIFIED · Degradation efficacy: NOT EVALUATED');
+      table(s,[m.qc||{}],['molecular_formula','molecular_weight','stereocenter_count','hbd','hba','rotatable_bonds','tpsa','logp','force_field','optimization_status']);
+      detail(s,'Chemical provenance',m.provenance);detail(s,'Ternary readiness',m.ternary_readiness);detail(s,'Previous TAK-285 blocked attempt',r.previous_attempt);
+    }else{
+      add(s,'p','Target context: '+value(m.target_context)+' · ERBB2-specific design: '+value(m.ERBB2_specific_design||'NOT_EVALUATED'));
+      add(s,'p','Assembly: '+value(typeof m.assembly==='object'?m.assembly.assembly_status:m.assembly)+' · Ternary: '+value(m.ternary_status),'status');
+      add(s,'p','Missing components: '+value(m.missing_inputs));add(s,'p','Required input fields: '+value(m.input_schema));add(s,'p','Next action: '+value(m.next_action));
+      detail(s,'Component QC and assembly evidence',m);
+    }
+    add(s,'h3','Validation and Critic');add(s,'p','Validation: '+r.validation_result+' · Critic: '+r.critic_decision);
+    add(s,'p','Missing evidence: '+value(r.missing_steps));if(r.blockers?.length)add(s,'p','Blocker: '+r.blockers.join('; '),'status');
+    detail(s,'Validation, Critic and provenance',{validation:r.validation,critic:r.critic,source_provenance:r.source_provenance});
+  }
+  const validation=section('Validation results','demo-validation');table(validation,modalities,['modality','modality_execution_status','validation_result']);
+  const critic=section('Critic comparison','demo-critic');table(critic,modalities,['modality','critic_decision','missing_steps']);
+  const next=section('Unverified items and next steps','demo-next');add(next,'p',value(d.missing_steps));add(next,'p','Demo completion does not establish therapeutic efficacy. Supply explicit degrader attachment inputs and curated ADC templates for further evaluation.');
+  const provenance=section('Provenance and complete tables','demo-provenance');const details=add(provenance,'details');add(details,'summary','Full tables, structures and source artifacts');
+  for(const a of d.artifacts||[]){if(!a.available)continue;const link=add(details,'a',a.title||a.label||a.path);link.href=a.href;link.style.display='block';}
+  detail(provenance,'Full execution trace',d.stages);
+  return true;
+}
+
+function renderReuseNotice(host,d){
+  const reuse=d.reuse||d.resume;
+  if(reuse){const p=document.createElement('p');p.textContent=(d.reuse?'기존 결과 재사용':'저장된 후보에서 재개')+' · ';const a=document.createElement('a');a.href=reuse.source_report_url;a.textContent=reuse.source_run_id;p.appendChild(a);host.prepend(p);}
+  for(const row of d.summary?.reused_stages||[]){const p=document.createElement('p');p.textContent='분석 단계 재사용 · '+row.stage+' · ';const a=document.createElement('a');a.href='/report?run_id='+encodeURIComponent(row.source_run_id);a.textContent=row.source_run_id;p.appendChild(a);host.appendChild(p);}
+}
+function renderTherapeuticRun(d){
+  if(d.detail && (location.search.includes('run_id=') || location.search.includes('run_dir='))){
+    const box=document.querySelector('.report-body')||document.querySelector('.content')||document.body;
+    box.replaceChildren();const error=document.createElement('p');
+    error.textContent='Report unavailable: '+String(d.detail);box.appendChild(error);return true;
+  }
+  if(d.kind!=='therapeutic') return false;
+  if(d.integrated_report)return renderIntegratedRun(d);
+  if(d.binder_report||d.degrader_report){
+    const panel=d.binder_report||d.degrader_report;
+    const host=document.querySelector('.report-body')||document.querySelector('.content');
+    host.replaceChildren();host.classList.add('integrated-report');
+    const title=document.querySelector('.title');if(title)title.textContent=panel.title;
+    const question=document.getElementById('rqText');if(question)question.textContent=d.run_id+' · '+panel.scope;
+    const badge=document.getElementById('verdictBadge');if(badge)badge.textContent=d.validation_decision;
+    const nav=document.querySelector('.toc');if(nav)nav.hidden=true;
+    renderDesignPanel(host,panel);
+    renderReuseNotice(host,d);
+    clearTimeout(window.omicraftReportTimer);
+    if(d.running&&!window.__COMPETITION_RUN__)window.omicraftReportTimer=setTimeout(async()=>{
+      try{const response=await fetch('/api/report'+location.search,{cache:'no-store'});if(response.ok)renderTherapeuticRun(await response.json());}catch(error){console.warn('Report refresh:',error.message);}
+    },10000);
+    return true;
+  }
+
+  if(d.execution_profile==='visual_diagnostic') return renderVisualDiagnostic(d);
+  if(d.execution_profile==='competition_demo') return renderCompetitionDemo(d);
+  const container=document.querySelector('.report-body')||document.querySelector('.content')||document.body;
+  container.replaceChildren();
+  const add=(tag,text)=>{const el=document.createElement(tag);el.textContent=text;container.appendChild(el);return el;};
+  const upstream=d.execution_profile==='upstream_analysis';
+  if(upstream){
+    container.classList.add('upstream-report');
+    const question=document.getElementById('rqText');if(question)question.textContent=d.summary?.question||d.question||'TCGA-BRCA TNBC vs Non-TNBC';
+    const title=document.querySelector('.title');if(title)title.textContent='OmiCraft Pipeline Report';
+    const badge=document.getElementById('verdictBadge');if(badge){badge.textContent=d.validation_decision;badge.className='verdict '+d.validation_decision;}
+    const nav=document.querySelector('.toc');if(nav){nav.replaceChildren();for(const [id,label] of [['upstream-stages','실행 단계'],['upstream-summary','분석 요약'],['upstream-candidates','후보 판정'],['pipeline-design-results','Design Results'],['upstream-plots','Visualizations'],['upstream-files','결과 파일']]){const link=document.createElement('a');link.href='#'+id;link.textContent=label;nav.append(link);}}
+    add('style','.upstream-report h3{margin:28px 0 12px}.upstream-report p{margin:6px 0}.upstream-report table{margin:12px 0}.upstream-report a{color:#80bfff;overflow-wrap:anywhere}.upstream-report pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;background:#161b22;max-height:500px;overflow:auto}.upstream-report details{margin:12px 0}.upstream-report img{margin:8px 0 24px}');
+  }
+  add('h2',(upstream?'TCGA-BRCA 분석: ':'Therapeutic run: ')+(d.run_id||'not available'));
+  if(d.running)add('p','실행 중입니다. 완료된 단계의 파일부터 표시됩니다. 새로고침하여 진행 상황을 확인하세요.');
+  add('p','Execution: '+d.execution_status+' | Validation: '+d.validation_decision+' | Critic: '+(d.critic?.decision||'NOT_EVALUATED'));
+  add('p','Modality: '+(d.modality||'—')+' | Mock: '+Boolean(d.is_mock));
+  add('p','Execution mode: '+(d.execution_mode||'not recorded'));
+  renderReuseNotice(container,d);
+  if(d.blockers?.length) add('p','Blockers: '+d.blockers.join(', '));
+  if(d.computational_validation?.scope) add('p','Computational assessment scope: '+d.computational_validation.scope+' · '+d.computational_validation.policy_version+' · '+d.computational_validation.threshold_status);
+  if(!upstream) add('p','Experimental validation: '+(d.experimental_validation||'NOT_EVALUATED'));
+  if(d.missing_steps?.length) add('p','Missing steps: '+d.missing_steps.join(', '));
+  if(d.execution_scope||d.summary?.execution_scope)add('p','Execution scope: '+(d.execution_scope||d.summary.execution_scope));
+  if(d.summary?.agent_notes){
+    add('h3','Agent Interpretation');
+    for(const [role,note] of Object.entries(d.summary.agent_notes)){
+      add('h4',role+' · '+note.status);add('p',note.text||note.reason||'');
+      for(const check of note.checks||[])add('p','['+role+':'+check.id+'] '+check.detail+' ['+check.status+']');
+    }
+  }
+  if(d.summary?.design_outcome){
+    const outcome=d.summary.design_outcome;
+    add('h3','Design validation outcome');
+    add('p','계산 완료 '+outcome.completed_routes+'개 · 검증 통과 '+outcome.validated_successes+'개 · 차단 '+outcome.blocked_routes+'개 · 실행 실패 '+outcome.failed_routes+'개');
+    if(!outcome.validated_successes)add('p','현재 실행에서 검증을 통과한 설계 후보는 없습니다.');
+  }
+  if(d.summary?.review_issues?.length){
+    const review=add('details','');const heading=document.createElement('summary');heading.textContent='과학적 검토 의견';review.appendChild(heading);
+    for(const issue of d.summary.review_issues){const line=document.createElement('p');line.textContent=issue;review.appendChild(line);}
+  }
+  if(d.summary?.modalities){
+    const comparison=add('table','');
+    const fields=['gene','modality','execution_mode','is_mock','execution_status','validation_status','critic_decision','missing_steps','blocker'];
+    const header=document.createElement('tr');comparison.appendChild(header);
+    for(const key of fields){const th=document.createElement('th');th.textContent=key;header.appendChild(th);}
+    for(const row of d.summary.modalities){
+      const tr=document.createElement('tr');comparison.appendChild(tr);
+      for(const key of fields){const td=document.createElement('td');if(key==='modality'&&/^design_\d{8}T\d{6}Z_[0-9a-f]{8}$/.test(row.run_id||'')){const link=document.createElement('a');link.textContent=String(row[key]);link.href='/report?run_id='+encodeURIComponent(row.run_id);link.target='_blank';link.rel='noopener';td.appendChild(link);}else{td.textContent=String(row[key]??'—');}tr.appendChild(td);}
+    }
+  }
+  add('h3','실행 단계').id=d.modality==='SMALL_MOLECULE'?'sm-completion':'upstream-stages';
+  const stageRows=upstream?Array.from(new Map((d.stages||[]).map(row=>[row.stage,row])).values()).filter(row=>row.stage!=='readiness'):d.summary?.execution_checklist?d.summary.execution_checklist:(d.stages||[]);
+  const table=add('table','');const stageHead=table.createTHead(),stageBody=table.createTBody();
+  for(const row of [{stage:'Stage',execution_status:'Execution',header:true},...stageRows]){
+    const tr=document.createElement('tr');(row.header?stageHead:stageBody).appendChild(tr);
+    for(const key of ['stage','execution_status']){const td=document.createElement(row.header?'th':'td');td.textContent=row[key]||'';tr.appendChild(td);}
+  }
+  if(upstream){
+    add('h3','분석 요약').id='upstream-summary';
+    const de=d.summary?.de||{},survival=d.summary?.survival||{},collections=d.summary?.gsea?.collections||{},directions=de.direction_counts||{};
+    add('p','분석 샘플: '+(survival.samples??'—')+' · 생존 분석 적격 환자: '+(survival.eligible_patients??'—'));
+    add('p','차등발현: TNBC 증가 '+(directions.Up_in_TNBC??'—')+'개 · 감소 '+(directions.Down_in_TNBC??'—')+'개');
+    add('p','유의 경로: Hallmark '+(collections.Hallmark?.significant??'—')+' / '+(collections.Hallmark?.tested??'—')+' · GO BP '+(collections.GOBP?.significant??'—')+' / '+(collections.GOBP?.tested??'—'));
+    const stats=add('details','');const statsLabel=document.createElement('summary');statsLabel.textContent='통계 요약 원본';stats.append(statsLabel);const statsData=document.createElement('pre');statsData.textContent=JSON.stringify({de,gsea:d.summary?.gsea,survival},null,2);stats.append(statsData);
+    add('h3','후보 판정').id='upstream-candidates';
+    const genes=add('table','');const geneHead=genes.createTHead(),geneBody=genes.createTBody();
+    for(const row of [{gene:'Gene',B:'B',tier:'Tier',decision:'Decision',reason:'Reason',header:true},...(d.summary?.candidates||[])]){
+      const tr=document.createElement('tr');(row.header?geneHead:geneBody).append(tr);
+      for(const field of ['gene','B','tier','decision']){const td=document.createElement(row.header?'th':'td');td.textContent=row[field]??'—';tr.append(td);}
+      for(const modality of ['SMALL_MOLECULE','DE_NOVO_BINDER','ADC','DEGRADER']){const td=document.createElement(row.header?'th':'td');td.textContent=row.header?modality:(row.routes||[]).find(r=>r.modality===modality)?.Tier||'NOT_EVALUATED';tr.append(td);}
+      const reason=document.createElement(row.header?'th':'td');reason.textContent=row.reason;tr.append(reason);
+    }
+    for(const note of d.summary?.limitations||[])add('p',note);
+    if(d.design_report)renderPipelineDesign(container,d.design_report);
+    add('h3','Visualizations').id='upstream-plots';
+    for(const artifact of d.artifacts||[]){if(artifact.available&&artifact.artifact_type==='plot'){
+      renderReportFigure(container,artifact);
+    }}
+  }
+  if(d.modality==='SMALL_MOLECULE' && d.summary?.candidates?.length){
+    const title=document.querySelector('.title');if(title)title.textContent='Small-molecule workflow report';
+    const question=document.getElementById('rqText');if(question)question.textContent=d.summary.candidates.map(c=>(c.gene_name||'')+' / '+c.candidate_id).join(', ');
+    const badge=document.getElementById('verdictBadge');if(badge){badge.textContent=d.validation_decision;badge.className='verdict '+d.validation_decision;}
+    const nav=document.querySelector('.toc');if(nav){nav.replaceChildren();for(const [id,label] of [['sm-completion','계산 완료 여부'],['sm-results','후보 결과'],['upstream-files','결과 파일']]){const a=document.createElement('a');a.href='#'+id;a.textContent=label;nav.append(a);}}
+    add('style','.report-body table{width:100%;margin:12px 0 22px;border-collapse:collapse}.report-body th,.report-body td{padding:8px;text-align:left;border-bottom:1px solid #30363d}.report-body h3{margin:24px 0 10px}.report-body p{margin:8px 0}.report-body details{margin:12px 0}.report-body a{overflow-wrap:anywhere}');
+    function rows(title, data, fields){
+      add('h3',title);const t=add('table',''),h=t.createTHead().insertRow(),body=t.createTBody();
+      for(const [label] of fields){const cell=document.createElement('th');cell.textContent=label;h.append(cell);}
+      for(const row of data){const tr=body.insertRow();for(const [,key] of fields){const value=row[key];tr.insertCell().textContent=value==null?'—':typeof value==='number'?String(Math.round(value*10000)/10000):String(value);}}
+    }
+    add('p','계산의 완료 여부와 후보의 과학적 통과 판정은 별도로 표시합니다.');
+    add('h3','후보별 결과').id='sm-results';
+    for(const c of d.summary.candidates){
+      add('h3',c.candidate_id+' · '+(c.gene_name||''));
+      add('p','최종 후보 판정: '+c.final_verdict+' · 구조 비교: '+c.consensus?.consensus_status);
+      rows('GNINA 도킹',c.docking?.poses||[],[['Pose','pose_rank'],['Vina score (kcal/mol)','docking_score'],['CNN score','cnn_score'],['CNN affinity output','cnn_affinity']]);
+      rows('Pose QC',c.pose_qc||[],[['Pose','pose_rank'],['QC 판정','pose_qc_status'],['Pocket occupancy','pocket_occupancy'],['심한 충돌 수','severe_clash_count']]);
+      rows('AF3',c.af3_ligand?.samples||[],[['Seed','seed'],['Sample','sample_id'],['Ligand pLDDT','ligand_atom_plddt_mean'],['Pocket occupancy','pocket_occupancy'],['Ligand chain iPTM','ligand_chain_iptm']]);
+      rows('도킹–AF3 구조 비교',c.consensus?.comparisons||[],[['도킹 Pose','docking_pose_rank'],['Ligand RMSD (Å)','docking_af3_pose_rmsd'],['Contact overlap','contact_residue_jaccard'],['구조 판정','consensus_status']]);
+      add('h3','ADMET · '+c.admet?.status);
+      add('p','출력 항목: '+(c.admet?.available_endpoint_count??'—')+' · 누락: '+(c.admet?.missing_endpoint_count??'—')+' · 실행 정책: '+(c.admet?.execution_policy||'structural_pass'));
+      if(c.admet?.execution_policy==='valid_input')add('p','유효한 화학 입력의 독립 물성 예측입니다. AF3 구조 지지 여부나 후보의 최종 판정을 변경하지 않습니다.');
+      const endpoints=c.admet?.endpoints||[];
+      rows('주요 ADMET 모델 출력',endpoints.filter(r=>['Solubility_AqSolDB','BBB_Martins','hERG','DILI','Caco2_Wang'].includes(r.endpoint_name)),[['항목','endpoint_name'],['모델 출력값','endpoint_value'],['상태','prediction_status']]);
+      const all=add('details',''),caption=document.createElement('summary'),pre=document.createElement('pre');caption.textContent='ADMET 전체 출력';pre.textContent=JSON.stringify(endpoints.map(r=>({endpoint:r.endpoint_name,value:r.endpoint_value,unit:r.endpoint_unit,status:r.prediction_status})),null,2);pre.style.whiteSpace='pre-wrap';all.append(caption,pre);
+      add('h3','최종 판정 근거');add('p',(c.critic?.reason_codes||[]).join(' · '));
+    }
+  }
+  if(['DE_NOVO_BINDER','ADC','DEGRADER'].includes(d.modality)){
+    const summary=d.summary||{};
+    function metricsTable(title,rows,fields){
+      add('h3',title);const t=add('table',''),head=t.createTHead().insertRow();
+      fields.forEach(key=>{const th=document.createElement('th');th.textContent=key;head.append(th);});
+      const body=t.createTBody();rows.forEach(row=>{const tr=body.insertRow();fields.forEach(key=>{const value=row[key];tr.insertCell().textContent=value==null?'—':typeof value==='object'?JSON.stringify(value):String(value);});});
+    }
+    if(d.modality==='DE_NOVO_BINDER'){
+      metricsTable('Binder candidates',summary.candidates||[],['candidate_id','final_verdict','failure_reasons']);
+      for(const target of summary.targets||[])if(target.failure_reasons?.length)add('p',target.failure_reasons.join(' · '));
+    }
+    if(d.modality==='ADC'){
+      metricsTable('Antibody structure assessment',[summary],['numbering_status','cdr_mapping_status','cdr_heavy_atom_contacts','cdr_contact_residues','severe_clashes']);
+      metricsTable('Conjugation candidates',summary.conjugation?.candidates||[],['review_rank','chain','residue_id','residue','sasa_angstrom2','cdr_distance_angstrom','exclusion_reasons']);
+      add('p','Linker/payload selection, DAR, internalization and experimental efficacy remain NOT EVALUATED.');
+    }
+    if(d.modality==='DEGRADER'){
+      metricsTable('Reference chemistry',[summary.qc||{}],['molecular_formula','molecular_weight','conformer_generation_status','conformer_identity_preserved']);
+      add('p','Ternary: '+(summary.ternary_status||'NOT_EVALUATED')+' · Experimental degradation: NOT_EVALUATED');
+      metricsTable('Ternary inputs',summary.ternary_readiness?.sequences||[],['entity','available','chain','sequence_length']);
+      metricsTable('AF3 ternary samples',summary.ternary_prediction?.samples||[],['seed','sample_id','af3_status','iptm','ptm','chain_pair_metrics','error_message']);
+    }
+    for(const artifact of d.artifacts||[])if(artifact.available&&/\.(png|jpg|jpeg|svg)$/i.test(artifact.path||'')){
+      renderReportFigure(container,artifact);
+    }
+  }
+  add('h3',upstream?'결과 파일':'Artifacts').id='upstream-files';
+  for(const artifact of d.artifacts||[]){
+    const el=add(artifact.available?'a':'p',artifact.label||artifact.path);
+    if(artifact.available){el.href=artifact.href;el.style.display='block';}
+    else el.append(' (not available through this server)');
+  }
+  const details=add('details','');
+  const caption=document.createElement('summary');caption.textContent='Metrics and provenance';details.appendChild(caption);
+  const pre=document.createElement('pre');pre.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere';
+  pre.textContent=JSON.stringify({summary:d.summary,validation:d.validation,critic:d.critic,readiness:d.readiness,selection:d.selection_event,stages:d.stages},null,2);
+  details.appendChild(pre);
+  return true;
+}
+</script>

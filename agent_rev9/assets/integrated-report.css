@@ -1,0 +1,33 @@
+body[data-omicraft-report] .integrated-report{max-width:1320px;margin:auto;color:#092b50}
+.integrated-report .ir-hero,.integrated-report .ir-section,.integrated-report .ir-success{padding:26px;border:1px solid #e0e8ef;border-radius:14px;background:white;margin:18px 0}
+.integrated-report .ir-hero{background:#092b50;color:#fff}.integrated-report .ir-hero h2{color:#fff!important}.integrated-report .ir-hero .ir-muted{color:#b8cbda}.ir-eyebrow{letter-spacing:.16em;font-size:11px;font-weight:700}.ir-muted{color:#6e8296;font-size:13px;line-height:1.6}
+.integrated-report .ir-success{border-left:5px solid #138c84;background:#effaf6}.ir-actions{display:flex;gap:20px;align-items:center;margin-top:20px}.ir-hero a{color:#ace6de!important}
+.integrated-report progress{width:100%;height:9px;accent-color:#138c84;border:0;border-radius:12px;overflow:hidden;margin:12px 0}
+.ir-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.integrated-report button{cursor:pointer;font:inherit;color:#092b50;border:1px solid #dce5ed;background:white;border-radius:9px;padding:10px 15px}.integrated-report .ir-card{text-align:left;padding:20px;display:grid;gap:12px;box-shadow:0 3px 12px #092b5006}.ir-card strong{font-size:16px}.ir-card small{color:#6e8296}.ir-status{font-size:12px;color:#9d691d}.ir-status.pass{color:#138c84}
+.ir-tabs{display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:0;background:#f4f7fbf5;padding:16px 0;z-index:4}.integrated-report .ir-tabs .selected{background:#138c84;color:white;border-color:#138c84}.ir-metrics{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}.ir-metrics div{background:#f4f7fb;border-radius:8px;padding:14px;min-width:130px;max-width:100%;overflow-wrap:anywhere}.ir-metrics small{display:block;color:#6e8296;font-size:11px}.ir-metrics strong{display:block;font-size:21px;margin-top:8px}.ir-confidence{max-width:500px}.ir-confidence label{font-size:12px}.ir-scroll{overflow:auto;max-height:480px}.ir-scroll table{width:100%;border-collapse:collapse;font-size:12px}.ir-scroll td,.ir-scroll th{border-bottom:1px solid #e0e8ef;padding:10px;text-align:left;max-width:420px;overflow-wrap:anywhere}.ir-scroll th{position:sticky;top:0;background:#f4f7fb}.ir-section h3{margin:24px 0 12px}.ir-section pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:400px;overflow:auto}.ir-section details{margin:18px 0;border-top:1px solid #e0e8ef;padding-top:14px}.ir-section summary{cursor:pointer}.ir-section figure{margin:20px 0}.ir-section figure img{max-width:100%;max-height:650px;object-fit:contain}.ir-file{padding:5px;overflow-wrap:anywhere}
+.integrated-report [hidden]{display:none!important}@media(max-width:800px){.ir-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.integrated-report .ir-section{padding:16px}.ir-tabs{position:static}}@media print{.integrated-report .ir-section[hidden]{display:block!important}.ir-tabs,.ir-actions button,.ir-scroll{max-height:none;overflow:visible}}
+
+/* Compact Binder figures retain the full image without cropping. */
+.integrated-report .ir-figures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.integrated-report .ir-figures .report-figure{min-width:0;margin:0!important;border:1px solid #e0e8ef;border-radius:8px;overflow:hidden}
+.integrated-report .ir-figures .report-figure-header{padding:12px 14px;background:#f7f9fb;border-bottom:1px solid #e0e8ef}
+.integrated-report .ir-figures h4{margin:0;font-size:13px!important;overflow-wrap:anywhere}
+.integrated-report .ir-figures .report-figure-viewport{padding:8px;max-height:none;overflow:visible}
+.integrated-report .ir-figures img,[data-omicraft-report] :is(.report-body,.content,#visual-diagnostic main) .ir-figures img{display:block;width:100%!important;height:auto!important;max-height:300px!important;object-fit:contain;margin:0 auto!important}
+[data-omicraft-report] :is(.report-body,.content,#visual-diagnostic main) .ir-figures figure{margin:0!important}
+.ir-figure-notice{padding:16px;margin:0;color:#6e8296;font-size:12.5px;line-height:1.6}
+.integrated-report .ir-figures figcaption{padding:8px 14px;font-size:12px;color:#6e8296}
+@media(max-width:760px){.integrated-report .ir-figures{grid-template-columns:minmax(0,1fr)}}
+
+.integrated-report :is(.ir-sequence-variation,.ir-confidence-figures){grid-column:1/-1;min-width:0}
+.integrated-report .ir-sequence-variation h3{margin:14px 0 10px}
+.integrated-report :is(.ir-sequence-variation,.ir-confidence-figures) label{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13px}
+.integrated-report :is(.ir-sequence-variation,.ir-confidence-figures) select{font:inherit;max-width:100%;min-width:0;padding:7px 10px;border:1px solid #c4c6d0;border-radius:6px;background:white;color:inherit}
+.integrated-report .ir-sequence-display{max-width:900px}
+
+.ir-result-badge{display:inline-block;margin:8px 0;padding:4px 10px;border-radius:999px;background:#006a66;color:#fff;font-size:12px;font-weight:600}
+.ir-scroll .ir-leading-row td{background:#dff5f3;border-bottom-color:#7fcfcb}
+.ir-leading-row td:first-child{border-left:4px solid #006a66}
+.ir-leading-row .ir-result-badge{display:block;width:max-content}
+.ir-leading-result{margin:16px 0;padding:16px;border:1px solid #7fcfcb;border-left:4px solid #006a66;border-radius:8px;background:#f0faf8;overflow-wrap:anywhere}
+.integrated-report .ir-passed-route{border:1px solid #7fcfcb;border-left:4px solid #006a66;border-radius:8px;padding:14px;margin:16px 0}

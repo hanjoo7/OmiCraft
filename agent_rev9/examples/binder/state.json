@@ -1,0 +1,28 @@
+{
+  "route": "protein_binder_rfd3",
+  "protein_design_input": {
+    "target_structure": "target.cif",
+    "target_sequence": "REPLACE_WITH_TARGET_SEQUENCE",
+    "target_chain": "A",
+    "binder_chain": "A",
+    "design_length": 60,
+    "num_designs": 4,
+    "hotspot_residues": [
+      "A123"
+    ]
+  },
+  "screening_options": {
+    "gpu_device": 0,
+    "max_rfd3_candidates": 4,
+    "max_mpnn_candidates": 4,
+    "max_af3_candidates": 4,
+    "max_protenix_candidates": 4,
+    "protenix_options": {
+      "executable": "/path/to/protenix-env/bin/protenix",
+      "required_files": [
+        "/path/to/protenix-v2/checkpoint.pt"
+      ],
+      "use_msa": false
+    }
+  }
+}

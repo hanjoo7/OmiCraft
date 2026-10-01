@@ -1,0 +1,36 @@
+{
+  "small_molecule": {
+    "docking": {
+      "backend": "gnina",
+      "executable": "/path/to/gnina"
+    },
+    "af3": {
+      "python_path": "/path/to/af3-env/bin/python",
+      "script_path": "/path/to/alphafold3/run_alphafold.py",
+      "model_dir": "/path/to/af3/models",
+      "database_dir": "/path/to/af3/databases",
+      "seeds": [
+        11,
+        22,
+        33
+      ]
+    },
+    "pose_qc": {
+      "run_posebusters": false,
+      "run_prolif": false
+    },
+    "thresholds": {}
+  },
+  "screening_options": {
+    "gpu_device": 0,
+    "max_gnina_candidates": 8,
+    "max_af3_candidates": 8,
+    "max_admet_candidates": 8,
+    "admet_options": {
+      "python_path": "/path/to/admet-env/bin/python",
+      "script_path": "../scripts/run_admet_pipeline.py",
+      "config_path": "admet.yaml",
+      "use_gpu": false
+    }
+  }
+}

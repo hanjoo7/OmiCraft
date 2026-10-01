@@ -1,0 +1,11 @@
+project:
+  name: small_molecule_admet
+input:
+  candidate_id_column: candidate_id
+  smiles_column: smiles
+predictor:
+  backend: admet_ai
+  batch_size: 32
+  device: cpu
+report:
+  selected_endpoints: {}

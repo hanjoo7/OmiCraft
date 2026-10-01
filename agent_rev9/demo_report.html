@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OmiCraft — Evidence Report · TNBC Target Discovery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
+
+:root{
+  --surface:#F7F9FB;--surface-low:#F2F4F6;--surface-c:#ECEEF0;--surface-high:#E6E8EA;
+  --panel:#FFFFFF;--ink:#191C1E;--ink-2:#44474F;--ink-3:#757780;
+  --rule:#E0E3E5;--rule-2:#C4C6D0;
+  --navy:#001C46;--navy-2:#0B2452;--navy-deep:#000411;--navy-dim:#B1C6FA;--navy-line:#7085B5;--navy-soft:#D8E2FF;
+  --teal:#006A66;--teal-bright:#29FCF3;--teal-dim:#00DDD6;--teal-soft:#DFF5F3;--teal-line:#7FCFCB;--teal-txt:#00504D;
+  --amber:#9A5B06;--amber-bg:#FDF0D5;--amber-line:#E0B36A;--amber-bright:#F5B547;
+  --err:#BA1A1A;--err-bg:#FFDAD6;--err-line:#E5A9A4;--err-txt:#93000A;
+  --sans:"Pretendard Variable",Pretendard,Inter,-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,monospace;
+  --side:272px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--surface);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;font-feature-settings:"tnum"}
+h1,h2,h3{font-weight:600;line-height:1.3;letter-spacing:-0.01em}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+/* ── App Shell ─────────────────────────── */
+.app{display:flex;min-height:100vh}
+.side{width:var(--side);flex:0 0 var(--side);position:fixed;top:0;bottom:0;left:0;background:var(--panel);border-right:1px solid var(--rule);display:flex;flex-direction:column;padding:20px 0 16px;z-index:20;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:11px;padding:0 20px 18px;border-bottom:1px solid var(--rule)}
+.brand .mark{width:40px;height:40px;border-radius:10px;background:var(--navy);display:grid;place-items:center;flex-shrink:0}
+.brand .mark span{color:#fff;font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:-.03em}
+.brand .nm b{display:block;font-size:16px;font-weight:700;letter-spacing:-.02em}
+.brand .nm small{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.07em}
+.side-stats{padding:14px 20px;border-bottom:1px solid var(--rule);display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ss{background:var(--surface-low);border-radius:6px;padding:10px 12px}
+.ss .sk{font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--ink-3);margin-bottom:2px}
+.ss .sv{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--ink);letter-spacing:-.02em}
+.ss .sv.teal{color:var(--teal)}
+.ss .sv.amber{color:var(--amber)}
+.nav{display:flex;flex-direction:column;gap:1px;padding:12px 0}
+.nvl{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-3);padding:4px 20px 6px}
+.nv{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13.5px;color:var(--ink-2);border-left:3px solid transparent;transition:background .12s}
+.nv:hover{background:var(--surface-low)}
+.nv.on{background:var(--surface-low);color:var(--teal);font-weight:600;border-left-color:var(--teal)}
+.sdisc{margin:auto 16px 0;font-size:10.5px;line-height:1.6;color:var(--ink-3);padding-top:12px;border-top:1px solid var(--rule)}
+.sdisc b{font-weight:600;color:var(--ink-2)}
+
+/* ── Main ──────────────────────────────── */
+.main{flex:1;min-width:0;margin-left:var(--side)}
+.topbar{position:sticky;top:0;z-index:15;background:rgba(247,249,251,.9);-webkit-backdrop-filter:saturate(180%) blur(14px);backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--rule);padding:14px 32px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.topbar h1{font-size:20px}
+.topbar .sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;color:var(--ink-3);margin-top:2px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:999px;border:1px solid var(--rule-2);background:var(--panel);font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--ink-3);flex:0 0 7px}
+.chip.ok{border-color:var(--teal-line);background:var(--teal-soft);color:var(--teal-txt)}
+.chip.ok i{background:var(--teal)}
+.chip.warn{border-color:var(--amber-line);background:var(--amber-bg);color:var(--amber)}
+.chip.warn i{background:var(--amber)}
+.tbr{margin-left:auto;display:flex;align-items:center;gap:9px}
+.content{padding:26px 32px 60px;max-width:1440px}
+
+section{margin-bottom:32px}
+.shead{display:flex;align-items:baseline;gap:13px;margin-bottom:14px;flex-wrap:wrap}
+.shead .num{font-family:var(--mono);font-size:11px;color:var(--teal);letter-spacing:.09em;font-weight:500}
+.shead h2{font-size:17px}
+.shead .hint{margin-left:auto;font-size:12.5px;color:var(--ink-3)}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:8px}
+.ch{display:flex;align-items:center;gap:9px;padding:11px 16px;background:var(--surface-low);border-bottom:1px solid var(--rule);border-radius:8px 8px 0 0;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.08em;color:var(--ink-2)}
+.ch .r{margin-left:auto;font-size:10px;color:var(--ink-3);letter-spacing:.05em}
+
+/* ── Tiles ─────────────────────────────── */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px}
+.tile{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:15px 17px}
+.tile .tl{font-size:12.5px;color:var(--ink-2);margin-bottom:4px}
+.tile .tv{font-family:var(--mono);font-size:26px;font-weight:500;letter-spacing:-.025em;line-height:1.2}
+.tile .tv.up{color:var(--err)}
+.tile .tv.dn{color:var(--navy)}
+.tile .tv.ok{color:var(--teal)}
+.tile .tsub{font-size:11px;color:var(--ink-3);margin-top:2px}
+
+/* ── Stepper ───────────────────────────── */
+.stepper{display:flex;align-items:flex-start;padding:20px 22px 18px;overflow-x:auto}
+.sp{display:flex;flex-direction:column;align-items:center;gap:9px;flex:0 0 auto;width:110px;text-align:center}
+.sp .dot{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--rule-2);background:var(--panel);display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--ink-3);transition:.25s}
+.sp .lb{font-size:11.5px;color:var(--ink-3);line-height:1.35;transition:.25s}
+.sp.done .dot{background:var(--teal);border-color:var(--teal);color:#fff}
+.sp.done .lb{color:var(--ink-2)}
+.sp.act .dot{border-color:var(--teal);color:var(--teal);box-shadow:0 0 0 4px var(--teal-soft)}
+.sp.act .lb{color:var(--teal);font-weight:600}
+.spl{flex:1;min-width:12px;height:1.5px;background:var(--rule-2);margin-top:15px;transition:background .3s}
+.spl.on{background:var(--teal)}
+
+/* ── Charts ────────────────────────────── */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-grid.wide{grid-template-columns:1fr}
+.chart-wrap{position:relative;min-height:260px}
+
+/* ── Tables ────────────────────────────── */
+.tbl-wrap{overflow-x:auto;padding:0 0 2px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{padding:9px 12px;text-align:left;background:var(--surface-low);color:var(--ink-3);font-weight:600;font-size:11px;letter-spacing:.05em;border-bottom:1px solid var(--rule)}
+tbody tr{border-bottom:1px solid var(--rule)}
+tbody tr:hover{background:var(--surface-low)}
+tbody td{padding:8px 12px;vertical-align:middle}
+.t-gene{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--navy)}
+.badge{display:inline-block;padding:2px 9px;border-radius:10px;font-family:var(--mono);font-size:10.5px;font-weight:600}
+.t1a,.t1b{background:var(--teal-soft);color:var(--teal-txt)}
+.t2a,.t2b{background:var(--amber-bg);color:var(--amber)}
+.t3{background:var(--surface-c);color:var(--ink-3)}
+.hold{background:var(--surface-high);color:var(--ink-3)}
+.dep-c{background:var(--teal-soft);color:var(--teal-txt)}
+.dep-o{background:var(--navy-soft);color:var(--navy-2)}
+.dep-d{background:var(--err-bg);color:var(--err-txt)}
+.dep-n{background:var(--surface-c);color:var(--ink-3)}
+.ctx-t{background:var(--navy-soft);color:var(--navy-2)}
+.ctx-o{background:var(--surface-c);color:var(--ink-3)}
+.tag{display:inline-block;font-size:10px;padding:1px 6px;margin:1px;border-radius:4px;background:var(--surface-c);color:var(--ink-2)}
+.dir-up{color:var(--err);font-family:var(--mono);font-size:11px;font-weight:600}
+.dir-dn{color:var(--navy);font-family:var(--mono);font-size:11px;font-weight:600}
+
+/* ── ADVANCE Cards ─────────────────────── */
+.cands{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;padding:16px}
+.cd{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px;position:relative;transition:box-shadow .15s}
+.cd:hover{box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.cd.adv{border-left:4px solid var(--teal)}
+.cht{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.cid{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--ink-3);background:var(--surface-c);padding:2px 7px;border-radius:4px}
+.cg{font-size:16px;font-weight:700;letter-spacing:-.02em;color:var(--navy)}
+.cv{margin-left:auto;font-family:var(--mono);font-size:10.5px;padding:2px 9px;border-radius:999px;background:var(--teal-soft);color:var(--teal-txt);font-weight:600}
+.cs{font-size:12.5px;color:var(--ink-2);margin-bottom:10px}
+.gr{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px}
+.gk{color:var(--ink-3);font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;align-self:center}
+.gv{color:var(--ink-2);font-size:12px;align-self:center}
+.struct-link{display:inline-block;margin-top:10px;font-size:11px;color:var(--teal);border:1px solid var(--teal-line);border-radius:5px;padding:3px 10px;background:var(--teal-soft);transition:background .12s}
+.struct-link:hover{background:var(--teal);color:#fff}
+
+/* ── Evidence Cards ────────────────────── */
+.evgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;padding:16px}
+.ev{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:14px}
+.ev.sup{border-left:4px solid var(--teal)}
+.ev.neu{border-left:4px solid var(--amber)}
+.ev.con{border-left:4px solid var(--err)}
+.eh{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.eid{font-family:var(--mono);font-size:9.5px;background:var(--surface-c);padding:2px 7px;border-radius:4px;color:var(--ink-3)}
+.ety{font-family:var(--mono);font-size:9.5px;font-weight:600}
+.ev.sup .ety{color:var(--teal)}
+.ev.neu .ety{color:var(--amber)}
+.ev.con .ety{color:var(--err)}
+.esrc{margin-left:auto;font-size:10.5px;color:var(--ink-3)}
+.ec{font-size:13px;color:var(--ink-2);line-height:1.5}
+.esub{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+
+/* ── Misc ──────────────────────────────── */
+.loading{text-align:center;color:var(--ink-3);padding:40px;font-size:13px}
+.err-box{background:var(--err-bg);border:1px solid var(--err-line);border-radius:6px;color:var(--err-txt);padding:12px 16px;font-size:13px}
+.diff-bar{background:var(--teal-soft);border:1px solid var(--teal-line);border-radius:6px;padding:10px 16px;font-size:12.5px;color:var(--teal-txt);margin-bottom:14px}
+.diff-bar b{font-weight:600}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app">
+
+<!-- ── Sidebar ──────────────────────────── -->
+<aside class="side">
+  <div class="brand">
+    <div class="mark"><span>Oc</span></div>
+    <div class="nm">
+      <b>OmiCraft</b>
+      <small>EVIDENCE REPORT</small>
+    </div>
+  </div>
+
+  <div class="side-stats">
+    <div class="ss"><div class="sk">UP-DEG</div><div class="sv teal" id="sUp">—</div></div>
+    <div class="ss"><div class="sk">DN-DEG</div><div class="sv amber" id="sDn">—</div></div>
+    <div class="ss"><div class="sk">PATHWAYS</div><div class="sv" id="sPw">—</div></div>
+    <div class="ss"><div class="sk">ADVANCE</div><div class="sv teal" id="sAdv">—</div></div>
+  </div>
+
+  <nav class="nav">
+    <div class="nvl">SECTIONS</div>
+    <a class="nv" href="#s0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      Pipeline Overview
+    </a>
+    <a class="nv" href="#s1">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      DEG Analysis
+    </a>
+    <a class="nv" href="#s2">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+      Sample QC · PCA
+    </a>
+    <a class="nv" href="#s3">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Pathway · GSEA
+    </a>
+    <a class="nv" href="#s4">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Target Qualification
+    </a>
+    <a class="nv" href="#s5">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      ADVANCE Candidates
+    </a>
+    <a class="nv" href="#s6">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Evidence Cards
+    </a>
+  </nav>
+
+  <div class="sdisc">
+    <b>Research Question</b><br>
+    <span id="sideRQ">데이터 로딩 중...</span>
+  </div>
+</aside>
+
+<!-- ── Main ─────────────────────────────── -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>Evidence Report</h1>
+      <div class="sub">TNBC · Target Discovery Pipeline · Rev6</div>
+    </div>
+    <span class="chip" id="topVerdict"><i></i>—</span>
+    <div class="tbr">
+      <a href="/" style="font-size:12.5px;color:var(--teal);border:1px solid var(--teal-line);padding:6px 13px;border-radius:6px;background:var(--teal-soft)">← Dashboard</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- S0: Pipeline Overview -->
+    <section id="s0">
+      <div class="shead">
+        <span class="num">SECTION 00</span>
+        <h2>Pipeline Overview</h2>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="ch">PIPELINE EXECUTION STEPPER</div>
+        <div class="stepper">
+          <div class="sp done"><div class="dot">&#10003;</div><div class="lb">TCGA-BRCA<br>Data</div></div>
+          <div class="spl on"></div>
+          <div class="sp done"><div class="dot">&#10003;</div><div class="lb">DESeq2<br>DEG</div></div>
+          <div class="spl on"></div>
+          <div class="sp done"><div class="dot">&#10003;</div><div class="lb">GSEA<br>Pathway</div></div>
+          <div class="spl on"></div>
+          <div class="sp done"><div class="dot">&#10003;</div><div class="lb">scRNA-seq<br>CELLxGENE</div></div>
+          <div class="spl on"></div>
+          <div class="sp done"><div class="dot">&#10003;</div><div class="lb">DepMap<br>CRISPR</div></div>
+          <div class="spl on"></div>
+          <div class="sp done"><div class="dot">&#10003;</div><div class="lb">Tier<br>Qualification</div></div>
+          <div class="spl on"></div>
+          <div class="sp done"><div class="dot">&#10003;</div><div class="lb">Design<br>Modality</div></div>
+        </div>
+      </div>
+      <div class="diff-bar">
+        <b>차별화 포인트</b> &nbsp;|&nbsp;
+        <b>&#9312; Cell Context</b>: CELLxGENE Census + genesorteR로 종양 세포 기원 확인 &nbsp;|&nbsp;
+        <b>&#9313; DepMap CRISPR</b>: Chronos gene effect로 암세포 필수 의존성 평가 &nbsp;|&nbsp;
+        <b>&#9314; Subcellular Location</b>: UniProt 세포내 위치로 모달리티 접근성 결정
+      </div>
+      <div class="card">
+        <div class="ch">DISEASE &amp; CONTRAST</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0;padding:0">
+          <div style="padding:14px 20px;border-right:1px solid var(--rule)">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.08em;margin-bottom:4px">DISEASE</div>
+            <div style="font-weight:600;font-size:14px">Breast Cancer (BRCA)</div>
+          </div>
+          <div style="padding:14px 20px;border-right:1px solid var(--rule)">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.08em;margin-bottom:4px">SUBTYPE</div>
+            <div style="font-weight:600;font-size:14px">TNBC (Triple-Negative)</div>
+          </div>
+          <div style="padding:14px 20px;border-right:1px solid var(--rule)">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.08em;margin-bottom:4px">CONTRAST 1</div>
+            <div style="font-size:13px">TNBC vs nonTNBC</div>
+          </div>
+          <div style="padding:14px 20px">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:.08em;margin-bottom:4px">CONTRAST 2</div>
+            <div style="font-size:13px">TNBC vs Normal</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S1: DEG -->
+    <section id="s1">
+      <div class="shead">
+        <span class="num">SECTION 01</span>
+        <h2>Differential Expression Analysis</h2>
+        <span class="hint">DESeq2 · TNBC vs nonTNBC</span>
+      </div>
+      <div class="tiles" id="degTiles"><div class="loading">로딩 중...</div></div>
+      <div class="chart-grid">
+        <div class="card">
+          <div class="ch">VOLCANO PLOT <span class="r">TNBC vs nonTNBC</span></div>
+          <div style="padding:16px"><div class="chart-wrap"><canvas id="volcanoChart"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="ch">TOP GENES</div>
+          <div style="padding:16px">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--err);letter-spacing:.06em;margin-bottom:8px">UPREGULATED</div>
+            <div id="topUpTable"><div class="loading">로딩 중...</div></div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--navy);letter-spacing:.06em;margin:14px 0 8px">DOWNREGULATED</div>
+            <div id="topDnTable"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S2: PCA -->
+    <section id="s2">
+      <div class="shead">
+        <span class="num">SECTION 02</span>
+        <h2>Sample Quality Control · PCA</h2>
+        <span class="hint">log2(count+1) 정규화 · sklearn PCA</span>
+      </div>
+      <div class="chart-grid">
+        <div class="card">
+          <div class="ch">PCA — SAMPLE DISTRIBUTION</div>
+          <div style="padding:16px">
+            <div class="chart-wrap"><canvas id="pcaChart"></canvas></div>
+            <div id="pcaVar" style="font-size:11px;color:var(--ink-3);margin-top:8px;text-align:center"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch">ANALYSIS CONFIG</div>
+          <div style="padding:16px">
+            <table>
+              <tbody>
+                <tr><td style="color:var(--ink-3);font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--rule)">데이터</td><td style="font-size:12.5px;padding:7px 0 7px 16px;border-bottom:1px solid var(--rule)">TCGA-BRCA count matrix (top 1,000 genes)</td></tr>
+                <tr><td style="color:var(--ink-3);font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--rule)">전처리</td><td style="font-size:12.5px;padding:7px 0 7px 16px;border-bottom:1px solid var(--rule)">log2(count + 1) 정규화</td></tr>
+                <tr><td style="color:var(--ink-3);font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--rule)">그룹</td><td style="font-size:12.5px;padding:7px 0 7px 16px;border-bottom:1px solid var(--rule)"><span style="color:var(--err)">TNBC</span> vs <span style="color:var(--navy)">Luminal / HER2</span></td></tr>
+                <tr><td style="color:var(--ink-3);font-size:12.5px;padding:7px 0">알고리즘</td><td style="font-size:12.5px;padding:7px 0 7px 16px">sklearn PCA (n_components=2, random_state=42)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- S3: GSEA -->
+    <section id="s3">
+      <div class="shead">
+        <span class="num">SECTION 03</span>
+        <h2>Pathway Enrichment · GSEA</h2>
+        <span class="hint">MSigDB Hallmark + KEGG + Reactome · FDR &lt; 0.25</span>
+      </div>
+      <div class="card">
+        <div class="ch">NORMALIZED ENRICHMENT SCORE (NES) <span class="r">상위 16 경로</span></div>
+        <div style="padding:16px"><div class="chart-wrap" style="min-height:340px"><canvas id="gseaChart"></canvas></div></div>
+      </div>
+    </section>
+
+    <!-- S4: Target Qualification -->
+    <section id="s4">
+      <div class="shead">
+        <span class="num">SECTION 04</span>
+        <h2>Target Qualification</h2>
+        <span class="hint">ADVANCE 후보 통합 근거</span>
+      </div>
+      <div class="diff-bar">
+        <b>&#9312; Cell Context</b>: CELLxGENE Census + genesorteR 세포 특이성 &nbsp;|&nbsp;
+        <b>&#9313; DepMap</b>: Chronos 의존성 &nbsp;|&nbsp;
+        <b>&#9314; Subcellular Location</b>: UniProt 위치 → 모달리티 접근성
+      </div>
+      <div class="card">
+        <div class="ch">ADVANCE TARGETS — 통합 근거 테이블</div>
+        <div class="tbl-wrap" id="targetTableWrap"><div class="loading">로딩 중...</div></div>
+      </div>
+    </section>
+
+    <!-- S5: ADVANCE Cards -->
+    <section id="s5">
+      <div class="shead">
+        <span class="num">SECTION 05</span>
+        <h2>ADVANCE Candidates</h2>
+      </div>
+      <div class="card">
+        <div class="ch">ADVANCE CANDIDATE CARDS</div>
+        <div class="cands" id="candCards"><div class="loading">로딩 중...</div></div>
+      </div>
+    </section>
+
+    <!-- S6: Evidence Cards -->
+    <section id="s6">
+      <div class="shead">
+        <span class="num">SECTION 06</span>
+        <h2>Evidence Cards</h2>
+      </div>
+      <div class="card">
+        <div class="ch">SUPPORTIVE / NEUTRAL EVIDENCE</div>
+        <div class="evgrid" id="evCards"><div class="loading">로딩 중...</div></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+</div>
+
+<script>
+const STRUCT_GENES = ['ESR1','ERBB4','GATA3','MMP7','PGR','FOXA1'];
+
+// ── Nav scroll tracking ──────────────────
+const navLinks = document.querySelectorAll('.nv[href^="#"]');
+const sectionObserver = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      navLinks.forEach(l=>l.classList.remove('on'));
+      const link = document.querySelector('.nv[href="#'+e.target.id+'"]');
+      if(link) link.classList.add('on');
+    }
+  });
+},{rootMargin:'-30% 0px -60% 0px'});
+document.querySelectorAll('section[id]').forEach(s=>sectionObserver.observe(s));
+
+const COLORS_CHART = {
+  up:'rgba(186,26,26,.72)', dn:'rgba(0,28,70,.65)', ns:'rgba(117,119,128,.2)',
+  tnbc:'rgba(186,26,26,.7)', non:'rgba(0,28,70,.6)',
+  bar_up:'rgba(186,26,26,.8)', bar_dn:'rgba(0,28,70,.75)'
+};
+
+// ── Load all data ────────────────────────
+async function loadAll(){
+  let d;
+  try{
+    d = await fetch('/api/report' + location.search).then(r=>r.json());
+  } catch(e){
+    document.querySelector('.content').innerHTML='<div class="err-box">데이터 로드 실패: '+e.message+'</div>';
+    return;
+  }
+
+  if(renderTherapeuticRun(d)) return;
+  renderReportProvenance(d);
+
+  // Sidebar / header
+  if(d.research_question){
+    document.getElementById('sideRQ').textContent = d.research_question;
+  }
+  if(d.final_verdict){
+    const vc = document.getElementById('topVerdict');
+    vc.innerHTML = '<i></i>' + d.final_verdict;
+    vc.className = 'chip ' + (d.final_verdict==='APPROVE'?'ok':'warn');
+  }
+
+  // ── DEG ─────────────────────────────────
+  if(d.deg_stats){
+    const s = d.deg_stats;
+    document.getElementById('sUp').textContent = s.n_up.toLocaleString();
+    document.getElementById('sDn').textContent = s.n_down.toLocaleString();
+    document.getElementById('degTiles').innerHTML = `
+      <div class="tile"><div class="tl">Total genes tested</div><div class="tv">${s.n_total.toLocaleString()}</div></div>
+      <div class="tile"><div class="tl">Upregulated</div><div class="tv up">${s.n_up.toLocaleString()}</div><div class="tsub">LFC &gt; ${s.lfc_cut}, FDR &lt; ${s.fdr_cut}</div></div>
+      <div class="tile"><div class="tl">Downregulated</div><div class="tv dn">${s.n_down.toLocaleString()}</div><div class="tsub">LFC &lt; -${s.lfc_cut}, FDR &lt; ${s.fdr_cut}</div></div>
+      <div class="tile"><div class="tl">LFC cutoff</div><div class="tv ok">${s.lfc_cut}</div><div class="tsub">log2 fold change</div></div>
+      <div class="tile"><div class="tl">FDR cutoff</div><div class="tv ok">${s.fdr_cut}</div><div class="tsub">adj. p-value</div></div>
+    `;
+  } else {
+    document.getElementById('degTiles').innerHTML='<div class="err-box">DEG 데이터 없음</div>';
+  }
+
+  // Volcano
+  if(d.volcano && d.volcano.length){
+    const ups = d.volcano.filter(p=>p.s==='up');
+    const dns = d.volcano.filter(p=>p.s==='dn');
+    const nss = d.volcano.filter(p=>p.s==='ns');
+    new Chart(document.getElementById('volcanoChart'),{
+      type:'scatter',
+      data:{datasets:[
+        {label:'Up ('+ups.length+')',  data:ups.map(p=>({x:p.x,y:p.y})), backgroundColor:COLORS_CHART.up,  pointRadius:3.5},
+        {label:'Down ('+dns.length+')',data:dns.map(p=>({x:p.x,y:p.y})), backgroundColor:COLORS_CHART.dn,  pointRadius:3.5},
+        {label:'NS',                   data:nss.map(p=>({x:p.x,y:p.y})), backgroundColor:COLORS_CHART.ns,  pointRadius:2.5},
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{labels:{color:'#44474F',boxWidth:10,font:{size:11,family:'JetBrains Mono'}}},
+          tooltip:{callbacks:{label:ctx=>{
+            const src=ctx.datasetIndex===0?ups:ctx.datasetIndex===1?dns:nss;
+            const p=src[ctx.dataIndex];
+            return (p?.g||'')+'  LFC:'+ctx.parsed.x+'  -log10p:'+ctx.parsed.y;
+          }}}
+        },
+        scales:{
+          x:{title:{display:true,text:'log2 Fold Change',color:'#757780'},grid:{color:'#E0E3E5'},ticks:{color:'#757780'}},
+          y:{title:{display:true,text:'-log10(padj)',color:'#757780'},grid:{color:'#E0E3E5'},ticks:{color:'#757780'}},
+        },
+        animation:{duration:300},
+      }
+    });
+  }
+
+  // Top genes tables
+  function geneTable(genes, isUp){
+    if(!genes||!genes.length) return '<p style="color:var(--ink-3);font-size:12px">데이터 없음</p>';
+    return '<table><thead><tr><th>Gene</th><th>LFC</th><th>FDR</th></tr></thead><tbody>'
+      +genes.map(g=>`<tr>
+        <td style="font-family:var(--mono);font-weight:700;color:${isUp?'var(--err)':'var(--navy)'}">${g.gene}</td>
+        <td style="font-family:var(--mono);font-size:11.5px">${g.lfc}</td>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--ink-3)">${g.padj}</td>
+      </tr>`).join('')
+      +'</tbody></table>';
+  }
+  document.getElementById('topUpTable').innerHTML = geneTable(d.top_up, true);
+  document.getElementById('topDnTable').innerHTML = geneTable(d.top_dn, false);
+
+  // ── PCA ──────────────────────────────────
+  if(d.pca && d.pca.length){
+    const tnbc = d.pca.filter(p=>p.g==='TNBC');
+    const non  = d.pca.filter(p=>p.g==='nonTNBC');
+    new Chart(document.getElementById('pcaChart'),{
+      type:'scatter',
+      data:{datasets:[
+        {label:'TNBC (n='+tnbc.length+')',   data:tnbc.map(p=>({x:p.x,y:p.y})), backgroundColor:COLORS_CHART.tnbc, pointRadius:5},
+        {label:'nonTNBC (n='+non.length+')', data:non.map(p=>({x:p.x,y:p.y})),  backgroundColor:COLORS_CHART.non,  pointRadius:5},
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#44474F',font:{size:11}}}},
+        scales:{
+          x:{title:{display:true,text:'PC1'+(d.pca_var?' ('+d.pca_var[0]+'%)':''),color:'#757780'},grid:{color:'#E0E3E5'},ticks:{color:'#757780'}},
+          y:{title:{display:true,text:'PC2'+(d.pca_var?' ('+d.pca_var[1]+'%)':''),color:'#757780'},grid:{color:'#E0E3E5'},ticks:{color:'#757780'}},
+        },
+        animation:{duration:300},
+      }
+    });
+    if(d.pca_var) document.getElementById('pcaVar').textContent='Explained variance: PC1 '+d.pca_var[0]+'%,  PC2 '+d.pca_var[1]+'%';
+  } else {
+    document.getElementById('pcaChart').parentElement.innerHTML='<div class="err-box">PCA 데이터 없음 — 카운트 행렬 필요</div>';
+  }
+
+  // ── GSEA ─────────────────────────────────
+  if(d.gsea && d.gsea.length){
+    if(d.gsea.length) document.getElementById('sPw').textContent = d.gsea.length;
+    new Chart(document.getElementById('gseaChart'),{
+      type:'bar',
+      data:{
+        labels:d.gsea.map(g=>g.term),
+        datasets:[{label:'NES', data:d.gsea.map(g=>g.nes),
+          backgroundColor:d.gsea.map(g=>g.nes>0?COLORS_CHART.bar_up:COLORS_CHART.bar_dn),
+          borderRadius:3}]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        indexAxis:'y',
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>{const g=d.gsea[ctx.dataIndex];return 'NES: '+g.nes+'  FDR: '+g.fdr;}}}
+        },
+        scales:{
+          x:{title:{display:true,text:'NES',color:'#757780'},grid:{color:'#E0E3E5'},ticks:{color:'#757780'},min:-3,max:3},
+          y:{ticks:{color:'#44474F',font:{size:11.5}},grid:{color:'#E0E3E5'}},
+        },
+        animation:{duration:300},
+      }
+    });
+  } else {
+    document.getElementById('gseaChart').parentElement.innerHTML='<div class="err-box">GSEA 데이터 없음</div>';
+  }
+
+  // ── Target Qualification Table ───────────
+  if(d.advance_targets && d.advance_targets.length){
+    document.getElementById('sAdv').textContent = d.advance_targets.length;
+    const tierClass = t=>{
+      const m={'B1D1':'t1a','B1D2':'t1b','B2D1':'t2a','B2D2':'t2b','B3D1':'t3','B3D2':'t3','B1':'t1a','B2':'t2a','B3':'t3'};
+      return m[t]||'hold';
+    };
+    const depClass = s=>{
+      const sl=(s||'').toUpperCase();
+      if(sl==='CONCORDANT'||sl==='PASS') return 'dep-c';
+      if(sl==='CRISPR_ONLY') return 'dep-o';
+      if(sl==='DISCORDANT'||sl==='FAIL') return 'dep-d';
+      return 'dep-n';
+    };
+    const ctxClass = s=>s==='TUMOR_ORIGIN'?'ctx-t':'ctx-o';
+    const tierLabel = t=>{
+      if(!t) return '—';
+      const m={'B1D1':'1A','B1D2':'1B','B2D1':'2A','B2D2':'2B','B3D1':'3','B3D2':'3'};
+      return m[t]||t;
+    };
+    const rows = d.advance_targets.map((t,i)=>`<tr>
+      <td><span class="t-gene">${t.gene}</span></td>
+      <td><span class="badge ${tierClass(t.tier)}">${tierLabel(t.tier)||'—'}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--ink-3)">${t.bio_conf||'—'}</td>
+      <td style="font-size:12.5px">${t.modality||'—'}</td>
+      <td>${(t.location||[]).slice(0,2).map(l=>`<span class="tag">${l}</span>`).join('')||
+           (t.subcell?`<span class="tag">${t.subcell}</span>`:'<span style="color:var(--ink-3)">—</span>')}</td>
+      <td><span class="badge ${depClass(t.depmap)}">${t.depmap||'—'}</span></td>
+      <td style="font-family:var(--mono);font-size:11.5px;text-align:right">${t.chronos!=null&&t.chronos!==''?t.chronos+'%':'—'}</td>
+      <td><span class="badge ${ctxClass(t.cell_ctx)}">${t.cell_ctx||'—'}</span></td>
+      <td><span class="${t.direction&&t.direction.includes('Up')?'dir-up':'dir-dn'}">${t.direction||'—'}</span></td>
+    </tr>`).join('');
+    document.getElementById('targetTableWrap').innerHTML=`<table>
+      <thead><tr>
+        <th>Gene</th><th>Tier</th><th>Bio Conf</th><th>Modality</th>
+        <th>&#9314; Subcellular Location</th>
+        <th>&#9313; DepMap Status</th><th>CRISPR%</th>
+        <th>&#9312; Cell Context</th><th>Direction</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  } else {
+    document.getElementById('targetTableWrap').innerHTML='<div class="err-box" style="margin:16px">파이프라인을 먼저 실행하세요.</div>';
+  }
+
+  // ── ADVANCE Cards ────────────────────────
+  if(d.advance_targets && d.advance_targets.length){
+    const hasStruct = g=>STRUCT_GENES.includes(g.toUpperCase());
+    document.getElementById('candCards').innerHTML = d.advance_targets.map((t,i)=>{
+      const locs = (t.location||[]).slice(0,2).join(', ')||t.subcell||'—';
+      return `<div class="cd adv">
+        <div class="cht">
+          <span class="cid">T-${String(i+1).padStart(2,'0')}</span>
+          <span class="cg">${t.gene}</span>
+          <span class="cv">${t.bio_conf||'?'}</span>
+        </div>
+        <div class="cs">${t.modality||''}</div>
+        <div class="gr">
+          <span class="gk">DIRECTION</span><span class="gv"><span class="${t.direction&&t.direction.includes('Up')?'dir-up':'dir-dn'}">${t.direction||'—'}</span></span>
+          <span class="gk">DEPMAP</span><span class="gv" style="font-family:var(--mono);font-size:11px">${t.depmap||'—'}${t.chronos!=null&&t.chronos!==''?' ('+t.chronos+'%)':''}</span>
+          <span class="gk">CELL CTX</span><span class="gv">${t.cell_ctx||'—'}</span>
+          <span class="gk">LOCATION</span><span class="gv" style="font-size:11.5px">${locs}</span>
+          <span class="gk">SAFETY</span><span class="gv" style="font-size:11.5px">${t.safety||'—'}</span>
+        </div>
+        ${hasStruct(t.gene)?`<a class="struct-link" href="/structure/${t.gene.toUpperCase()}" target="_blank">&#128300; Boltz2 구조 보기</a>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  // ── Evidence Cards ───────────────────────
+  if(d.advance_targets && d.advance_targets.length){
+    const evs=[];
+    d.advance_targets.forEach(t=>{
+      const dp=(t.depmap||'').toUpperCase();
+      if(dp==='CONCORDANT'||dp==='PASS') evs.push({type:'sup',id:`EV-DEP-${t.gene}`,src:'DepMap',
+        content:`${t.gene}: DepMap 의존성 확인 (${dp})`,
+        sub:`CRISPR 의존 세포주 ${t.chronos||'?'}%`});
+      if(t.cell_ctx==='TUMOR_ORIGIN') evs.push({type:'sup',id:`EV-SC-${t.gene}`,src:'scRNA-seq',
+        content:`${t.gene}: 종양 세포 기원(TUMOR_ORIGIN) — CELLxGENE census 확인`,
+        sub:'genesorteR 세포 특이성 분석'});
+      if(dp==='DISCORDANT') evs.push({type:'neu',id:`EV-DIS-${t.gene}`,src:'DepMap',
+        content:`${t.gene}: CRISPR/RNAi 불일치 — 의존성 맥락 의존적`,
+        sub:'병용 요법으로 내성 완화 고려'});
+      if(t.subcell==='SURFACE') evs.push({type:'sup',id:`EV-LOC-${t.gene}`,src:'UniProt',
+        content:`${t.gene}: 표면 단백질 (SURFACE) — ADC/항체 접근성 우수`,
+        sub:`위치: ${(t.location||[]).join(', ')||t.subcell}`});
+    });
+    if(!evs.length) evs.push({type:'neu',id:'EV-GEN-001',src:'Pipeline',
+      content:'파이프라인 완료 — 세부 evidence는 final_dossier.json 참조', sub:''});
+    document.getElementById('evCards').innerHTML=evs.slice(0,12).map(e=>`
+      <div class="ev ${e.type}">
+        <div class="eh">
+          <span class="eid">${e.id}</span>
+          <span class="ety">${e.type.toUpperCase()}</span>
+          <span class="esrc">${e.src}</span>
+        </div>
+        <div class="ec">${e.content}</div>
+        ${e.sub?`<div class="esub">${e.sub}</div>`:''}
+      </div>
+    `).join('');
+  }
+}
+
+loadAll();
+</script>
+</body>
+</html>

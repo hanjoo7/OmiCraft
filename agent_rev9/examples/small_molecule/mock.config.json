@@ -1,0 +1,30 @@
+{
+  "small_molecule": {
+    "docking": {
+      "backend": "mock"
+    },
+    "af3": {
+      "seeds": [
+        11,
+        22
+      ],
+      "num_samples": 1
+    },
+    "pose_qc": {
+      "run_posebusters": false,
+      "run_prolif": false
+    },
+    "thresholds": {
+      "minimum_successful_af3_seeds": 2,
+      "maximum_cross_seed_pose_rmsd": 0.1,
+      "maximum_docking_af3_pose_rmsd": 0.1,
+      "minimum_contact_residue_jaccard": 0.5,
+      "minimum_pocket_reproducibility": 1
+    }
+  },
+  "screening_options": {
+    "max_gnina_candidates": 2,
+    "max_af3_candidates": 2,
+    "max_admet_candidates": 2
+  }
+}

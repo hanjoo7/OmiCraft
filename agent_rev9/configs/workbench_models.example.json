@@ -1,0 +1,188 @@
+{
+  "SMALL_MOLECULE": {
+    "small_molecule": {
+      "docking": {
+        "backend": "gnina",
+        "executable": "${OMICRAFT_WORKSPACE}/tools/gnina/v1.3.3/gnina",
+        "cnn_scoring": "rescore",
+        "custom_cnn_model": null,
+        "environment": {
+          "LD_LIBRARY_PATH": "${OMICRAFT_WORKSPACE}/challenge/alphafold3/.venv/lib/python3.12/site-packages/nvidia/cublas/lib:${OMICRAFT_WORKSPACE}/challenge/alphafold3/.venv/lib/python3.12/site-packages/nvidia/cuda_cccl/lib:${OMICRAFT_WORKSPACE}/challenge/alphafold3/.venv/lib/python3.12/site-packages/nvidia/cuda_cupti/lib:${OMICRAFT_WORKSPACE}/challenge/alphafold3/.venv/lib/python3.12/site-packages/nvidia/cuda_nvrtc/lib:${OMICRAFT_WORKSPACE}/challenge/alphafold3/.venv/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:${OMICRAFT_WORKSPACE}/challenge/alphafold3/.venv/lib/python3.12/site-packages/nvidia/cudnn/lib:${OMICRAFT_WORKSPACE}/challenge/alphafold3/.venv/lib/python3.12/site-packages/nvidia/cufft/lib:${OMICRAFT_WORKSPACE}/challenge/alphafold3/.venv/lib/python3.12/site-packages/nvidia/cusolver/lib:${OMICRAFT_WORKSPACE}/challenge/alphafold3/.venv/lib/python3.12/site-packages/nvidia/cusparse/lib:${OMICRAFT_WORKSPACE}/challenge/alphafold3/.venv/lib/python3.12/site-packages/nvidia/nccl/lib:${OMICRAFT_WORKSPACE}/challenge/alphafold3/.venv/lib/python3.12/site-packages/nvidia/nvjitlink/lib:${OMICRAFT_WORKSPACE}/challenge/alphafold3/.venv/lib/python3.12/site-packages/nvidia/nvshmem/lib"
+        },
+        "seed": 2026,
+        "num_modes": 3,
+        "exhaustiveness": 8,
+        "timeout_seconds": 3600,
+        "cpu": 4,
+        "use_gpu": true,
+        "device": 4
+      },
+      "af3": {
+        "python_path": "${OMICRAFT_WORKSPACE}/challenge/model_runtime/af3-cu13-env/bin/python",
+        "script_path": "${OMICRAFT_WORKSPACE}/challenge/alphafold3/run_alphafold.py",
+        "model_dir": "${OMICRAFT_WORKSPACE}/challenge/alphafold3/models",
+        "database_dir": "${OMICRAFT_WORKSPACE}/challenge/alphafold3_databases",
+        "hmmer_bin_dir": "${OMICRAFT_WORKSPACE}/challenge/hmmer/bin",
+        "target_msa_path": "${OMICRAFT_WORKSPACE}/runs/real_validation_20260922T133906Z/small_molecule/target_msa.json",
+        "seeds": [
+          11
+        ],
+        "num_samples": 1,
+        "input_version": 4,
+        "protein_chain_id": "A",
+        "ligand_chain_id": "B",
+        "use_templates": false,
+        "timeout_seconds": 1800,
+        "environment": {
+          "LIBCIFPP_DATA_DIR": "${OMICRAFT_WORKSPACE}/challenge/alphafold3/build/af3_editable/_deps/cifpp-src/rsrc",
+          "XLA_PYTHON_CLIENT_PREALLOCATE": "false",
+          "XLA_CLIENT_MEM_FRACTION": "0.35",
+          "XLA_FLAGS": "--xla_gpu_enable_triton_gemm=false",
+          "OMP_NUM_THREADS": "8",
+          "MKL_NUM_THREADS": "8",
+          "OPENBLAS_NUM_THREADS": "8"
+        }
+      },
+      "run_admet": true
+    },
+    "screening_options": {
+      "gpu_device": 4,
+      "max_gnina_candidates": 1,
+      "max_af3_candidates": 1,
+      "max_admet_candidates": 1,
+      "admet_options": {
+        "python_path": "${OMICRAFT_WORKSPACE}/challenge/erbb2_af3_backbone/.venv/bin/python",
+        "script_path": "${OMICRAFT_PACKAGE}/scripts/run_admet_pipeline.py",
+        "config_path": "${OMICRAFT_PACKAGE}/configs/admet.yaml",
+        "use_gpu": false
+      }
+    }
+  },
+  "DE_NOVO_BINDER": {
+    "rfd3": {
+      "executable": "${OMICRAFT_WORKSPACE}/challenge/model_runtime/rfd3-env/bin/rfd3",
+      "checkpoint_path": "${OMICRAFT_WORKSPACE}/challenge/model_runtime/checkpoints/rfd3_latest.ckpt",
+      "seed": 47,
+      "timeout_seconds": 3600,
+      "enabled": true,
+      "dry_run": false,
+      "is_non_loopy": true,
+      "step_scale": 3.0,
+      "gamma_0": 0.2,
+      "num_designs": 1,
+      "design_length": 100,
+      "target_chain": "A",
+      "binder_chain": "A"
+    },
+    "protein_mpnn": {
+      "python_path": "${OMICRAFT_WORKSPACE}/challenge/model_runtime/rfd3-env/bin/python",
+      "script_path": "${OMICRAFT_WORKSPACE}/challenge/model_runtime/ProteinMPNN/protein_mpnn_run.py",
+      "model_weights_dir": "${OMICRAFT_WORKSPACE}/challenge/model_runtime/ProteinMPNN/vanilla_model_weights",
+      "seed": 47,
+      "num_sequences_per_backbone": 1,
+      "timeout_seconds": 600,
+      "sampling_temp": 0.1,
+      "omit_AAs": "CX"
+    },
+    "af3_binder": {
+      "python_path": "${OMICRAFT_WORKSPACE}/challenge/model_runtime/af3-cu13-env/bin/python",
+      "script_path": "${OMICRAFT_WORKSPACE}/challenge/alphafold3/run_alphafold.py",
+      "model_dir": "${OMICRAFT_WORKSPACE}/challenge/alphafold3/models",
+      "database_dir": "${OMICRAFT_WORKSPACE}/challenge/alphafold3_databases",
+      "seeds": [
+        11
+      ],
+      "timeout_seconds": 3600,
+      "target_msa_path": "",
+      "binder_msa_mode": "single_sequence",
+      "use_templates": false,
+      "hmmer_bin_dir": "${OMICRAFT_WORKSPACE}/challenge/hmmer/bin",
+      "environment": {
+        "LIBCIFPP_DATA_DIR": "${OMICRAFT_WORKSPACE}/challenge/alphafold3/build/af3_editable/_deps/cifpp-src/rsrc",
+        "XLA_PYTHON_CLIENT_PREALLOCATE": "false",
+        "XLA_CLIENT_MEM_FRACTION": "0.35",
+        "XLA_FLAGS": "--xla_gpu_enable_triton_gemm=false",
+        "OMP_NUM_THREADS": "8",
+        "MKL_NUM_THREADS": "8",
+        "OPENBLAS_NUM_THREADS": "8"
+      },
+      "num_samples": 1
+    },
+    "screening_options": {
+      "gpu_device": 4,
+      "max_targets": 1,
+      "max_rfd3_candidates": 1,
+      "max_mpnn_candidates": 1,
+      "max_af3_candidates": 1,
+      "max_protenix_candidates": 0
+    }
+  },
+  "ADC": {
+    "numbering_python_path": "${OMICRAFT_WORKSPACE}/tools/anarcii/.venv/bin/python"
+  },
+  "DEGRADER": {
+    "af3": {
+      "python_path": "${OMICRAFT_WORKSPACE}/challenge/model_runtime/af3-cu13-env/bin/python",
+      "script_path": "${OMICRAFT_WORKSPACE}/challenge/alphafold3/run_alphafold.py",
+      "model_dir": "${OMICRAFT_WORKSPACE}/challenge/alphafold3/models",
+      "database_dir": "${OMICRAFT_WORKSPACE}/challenge/alphafold3_databases",
+      "hmmer_bin_dir": "${OMICRAFT_WORKSPACE}/challenge/hmmer/bin",
+      "target_msa_path": "",
+      "seeds": [
+        11,
+        23
+      ],
+      "num_samples": 1,
+      "input_version": 4,
+      "protein_chain_id": "A",
+      "ligand_chain_id": "C",
+      "use_templates": false,
+      "timeout_seconds": 1800,
+      "environment": {
+        "LIBCIFPP_DATA_DIR": "${OMICRAFT_WORKSPACE}/challenge/alphafold3/build/af3_editable/_deps/cifpp-src/rsrc",
+        "XLA_PYTHON_CLIENT_PREALLOCATE": "false",
+        "XLA_CLIENT_MEM_FRACTION": "0.35",
+        "XLA_FLAGS": "--xla_gpu_enable_triton_gemm=false",
+        "OMP_NUM_THREADS": "8",
+        "MKL_NUM_THREADS": "8",
+        "OPENBLAS_NUM_THREADS": "8"
+      },
+      "data_pipeline_timeout_seconds": 5400,
+      "inference_timeout_seconds": 1800
+    },
+    "seed": 11,
+    "max_iterations": 2000,
+    "ternary_sequences": {
+      "ERBB2": {
+        "path": "${OMICRAFT_WORKSPACE}/challenge/alphafold3_databases/mmcif_files/3pp0.cif",
+        "source": "PDB 3PP0, local observed ERBB2 kinase chain A; prior real validation target",
+        "source_chain": "A",
+        "chain": "A",
+        "sequence": "APNQALLRILKETELRKVKVLGSGAFGTVYKGIWIPDGENVKIPVAIKVLRENTSPKANKEILDEAYVMAGVGSPYVSRLLGICLTSTVQLVTQLMPYGCLLDHVRENRGRLGSQDLLNWCMQIAKGMSYLEDVRLVHRDLAARNVLVKSPNHVKITDFGLARLLDIDETEYHAGKVPIKWMALESILRRRFTHQSDVWSYGVTVWELMTFGAKPYDGIPAREIPDLLEKGERLPQPPICTIDVYMIMVKCWMIDSECRPRFRELVSEFSRMARDPQRFVVIQNED"
+      },
+      "VHL": {
+        "path": "${OMICRAFT_WORKSPACE}/runs/validation_revision_20260922T081750Z/executions/degrader_reconstruction/reference_5T35.cif",
+        "source": "Existing local PDB 5T35 chain D used only as sequence provenance; no reference reconstruction run",
+        "source_chain": "D",
+        "chain": "B",
+        "sequence": "PVLRSVNSREPSQVIFCNRSPRVVLPVWLNFDGEPQPYPTLPPGTGRRIHSYRGHLWLFRDAGTHDGLLVNQTELFVPSLNVDGQPIFANITLPVYTLKERCLQVVRSLVKPENYRRLDIVRSLYEDLEDHPNVQKDLERLTQERIAHQ"
+      },
+      "ElonginB": {
+        "path": "${OMICRAFT_WORKSPACE}/runs/validation_revision_20260922T081750Z/executions/degrader_reconstruction/reference_5T35.cif",
+        "source": "Existing local PDB 5T35 chain B used only as sequence provenance; no reference reconstruction run",
+        "source_chain": "B",
+        "chain": "D",
+        "sequence": "MDVFLMIRRHKTTIFTDAKESSTVFELKRIVEGILKRPPDEQRLYKDDQLLDDGKTLGECGFTSQTARPQAPATVGLAFRADDTFEALCIEPFSSPPELPDVMK"
+      },
+      "ElonginC": {
+        "path": "${OMICRAFT_WORKSPACE}/runs/validation_revision_20260922T081750Z/executions/degrader_reconstruction/reference_5T35.cif",
+        "source": "Existing local PDB 5T35 chain C used only as sequence provenance; no reference reconstruction run",
+        "source_chain": "C",
+        "chain": "E",
+        "sequence": "MMYVKLISSDGHEFIVKREHALTSGTIKAMLSNEVNFREIPSHVLSKVCMYFTYKVRYTNSSTEIPEFPIAPEIALELLMAANFLDC"
+      }
+    },
+    "run_ternary": true,
+    "execution_timeout_seconds": 7800
+  }
+}

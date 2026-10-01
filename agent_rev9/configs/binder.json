@@ -1,0 +1,28 @@
+{
+  "rfd3": {
+    "executable": "/path/to/rfd3-env/bin/rfd3",
+    "checkpoint_path": "/path/to/rfd3.ckpt"
+  },
+  "protein_mpnn": {
+    "python_path": "/path/to/mpnn-env/bin/python",
+    "script_path": "/path/to/ProteinMPNN/protein_mpnn_run.py",
+    "model_weights_dir": "/path/to/ProteinMPNN/vanilla_model_weights",
+    "model_name": "v_48_020"
+  },
+  "af3_binder": {
+    "python_path": "/path/to/af3-env/bin/python",
+    "script_path": "/path/to/alphafold3/run_alphafold.py",
+    "model_dir": "/path/to/af3/models",
+    "database_dir": "/path/to/af3/databases",
+    "seeds": [
+      11,
+      22
+    ],
+    "binder_msa_mode": "single_sequence",
+    "use_templates": false
+  },
+  "protenix": {
+    "enabled": false,
+    "required": false
+  }
+}

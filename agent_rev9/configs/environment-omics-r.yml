@@ -1,0 +1,33 @@
+name: omics-r
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - r-base=4.4
+  - bioconductor-deseq2=1.46
+  - bioconductor-limma=3.62
+  - bioconductor-sva=3.54
+  - bioconductor-ruvseq=1.40
+  - bioconductor-edger=4.4
+  - bioconductor-clusterprofiler=4.14
+  - bioconductor-fgsea=1.32
+  - bioconductor-apeglm=1.28
+  - r-survival
+  - r-ggplot2
+  - r-ggrepel
+  - r-pheatmap
+  - r-data.table
+  - r-jsonlite
+  - r-remotes
+  - r-mclust
+  - r-dendextend
+  - r-ggforce
+  - r-ggnewscale
+  - r-tidygraph
+  - r-ggraph
+  - r-snowballc
+  - r-expm
+  - r-arules
+  - r-lsa
+  - r-mcl
+  - r-bayesbio

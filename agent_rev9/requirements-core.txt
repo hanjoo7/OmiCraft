@@ -1,0 +1,7 @@
+biopython>=1.83,<2
+numpy>=1.26,<3
+pydantic>=2,<3
+psutil>=5.9,<8
+PyYAML>=6,<7
+rdkit>=2024.3
+zstandard>=0.22,<1

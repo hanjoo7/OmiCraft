@@ -1,0 +1,41 @@
+{
+  "tamoxifen": {
+    "source": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/tamoxifen/property/IsomericSMILES/JSON",
+    "response": {
+      "PropertyTable": {
+        "Properties": [
+          {
+            "CID": 2733526,
+            "SMILES": "CC/C(=C(\\C1=CC=CC=C1)/C2=CC=C(C=C2)OCCN(C)C)/C3=CC=CC=C3"
+          }
+        ]
+      }
+    }
+  },
+  "estradiol": {
+    "source": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/estradiol/property/IsomericSMILES/JSON",
+    "response": {
+      "PropertyTable": {
+        "Properties": [
+          {
+            "CID": 5757,
+            "SMILES": "C[C@]12CC[C@H]3[C@H]([C@@H]1CC[C@@H]2O)CCC4=C3C=CC(=C4)O"
+          }
+        ]
+      }
+    }
+  },
+  "fulvestrant": {
+    "source": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/fulvestrant/property/IsomericSMILES/JSON",
+    "response": {
+      "PropertyTable": {
+        "Properties": [
+          {
+            "CID": 104741,
+            "SMILES": "C[C@]12CC[C@H]3[C@H]([C@@H]1CC[C@@H]2O)[C@@H](CC4=C3C=CC(=C4)O)CCCCCCCCCS(=O)CCCC(C(F)(F)F)(F)F"
+          }
+        ]
+      }
+    }
+  }
+}

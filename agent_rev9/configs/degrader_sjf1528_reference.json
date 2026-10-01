@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "candidate_id": "SJF1528",
+  "display_name": "SJF1528",
+  "input_mode": "published_full_molecule",
+  "candidate_origin": "published_reference",
+  "novel_design": false,
+  "target": "ERBB2",
+  "secondary_target": "EGFR",
+  "target_context": "ERBB2/EGFR",
+  "e3_ligase": "VHL",
+  "full_degrader_smiles": "ClC=1C=C(C=CC1OCC1=CC(=CC=C1)F)NC1=NC=NC2=CC=C(C=C12)C1=CC=C(OCCOCCOCC(=O)N[C@H](C(=O)N2[C@@H](C[C@H](C2)O)C(=O)NCC2=CC=C(C=C2)C2=C(N=CS2)C)C(C)(C)C)C=C1",
+  "warhead_smiles": null,
+  "e3_ligand_smiles": null,
+  "linker_smiles": null,
+  "warhead_map": null,
+  "e3_map": null,
+  "linker_maps": null,
+  "primary_doi": "10.1016/j.chembiol.2017.09.009",
+  "primary_pmid": "29129716",
+  "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/instance/5831399/bin/NIHMS911191-supplement.pdf",
+  "source_sha256": "182bbb3721650d505e9b45b7d0e10d462af61dfb1c8bdf08f3902b6eb8cd4ac6",
+  "source_accessed_at": "2026-09-23T00:29:24.781855+00:00",
+  "structure_source": "Primary SI page 11 exact stereochemical name \u2192 OPSIN SMILES (unedited); PubChem CID 135157151 and Chemical Probes Portal crosscheck",
+  "curation_status": "VERIFIED",
+  "curation_message": "Primary SI explicitly identifies SJF-1528 as PROTAC 1. Its (2S,4R), (S) name was extracted without chemical edits and converted by OPSIN. RDKit stereochemical graph identity, canonical isomeric SMILES and InChIKey match PubChem and Chemical Probes Portal. SI ion formula C55H58ClFN7O8S is [M+H]+, not neutral formula; portal 1029.37 matches neutral exact mass, while PubChem 1030.6 is average molecular weight. No component ports curated.",
+  "source_records": [
+    {
+      "file": "pubchem.json",
+      "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/135157151/property/CanonicalSMILES,IsomericSMILES,InChI,InChIKey,MolecularFormula,MolecularWeight/JSON",
+      "status": 200,
+      "accessed_at": "2026-09-23T00:21:53.160059+00:00",
+      "sha256": "ddbd930007f8f5fb15472ff549deaafed18f005aa69eab750aa613a19c0c4124",
+      "bytes": 959
+    },
+    {
+      "file": "probes.html",
+      "url": "https://www.chemicalprobes.org/sjf1528",
+      "accessed_at": "2026-09-23T00:24:00.329541+00:00",
+      "sha256": "04b87d73326a4cd5ff8cb1dff837373d36bd970ad03eb06eb911dd88ea73ba55",
+      "bytes": 105575,
+      "header": "b'<!doctype html>\\n<html data-n-head-ssr lang=\"en\" data-n-head=\"%7B%22lang%22:%7B%22ssr%22:%22en%22%7D%7D\">\\n  <head >\\n    <title>Probe SJF1528 | Chemical Probes Portal</title><meta data-n-head=\"ssr\" charset=\"utf-8\"><meta data-n-head=\"ssr\" name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\"><meta data-n-head=\"ssr\" name=\"author\" content=\"ChemicalProbes.org, UK\"><meta data-'"
+    },
+    {
+      "file": "primary_supplement.pdf",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/instance/5831399/bin/NIHMS911191-supplement.pdf",
+      "accessed_at": "2026-09-23T00:29:24.781855+00:00",
+      "sha256": "182bbb3721650d505e9b45b7d0e10d462af61dfb1c8bdf08f3902b6eb8cd4ac6",
+      "bytes": 1764090,
+      "valid_pdf": true
+    },
+    {
+      "file": "opsin.json",
+      "url": "https://opsin.ch.cam.ac.uk/opsin/%282S%2C4R%29-1-%28%28S%29-2-%282-%282-%282-%284-%284-%28%283-Chloro-4-%28%283-fluorobenzyl%29oxy%29phenyl%29amino%29quinazolin-6-yl%29phenoxy%29ethoxy%29ethoxy%29acetamido%29-3%2C3-dimethylbutanoyl%29-4-hydroxy-N-%284-%284-methylthiazol-5-yl%29benzyl%29pyrrolidine-2-carboxamide.json",
+      "accessed_at": "2026-09-23T00:31:00.273064+00:00",
+      "sha256": "baf0b3cb0147585e3d6f36a8e9e106291c157f13779c47323503cfda1af4333a",
+      "bytes": 24059
+    }
+  ],
+  "primary_systematic_name": "(2S,4R)-1-((S)-2-(2-(2-(2-(4-(4-((3-Chloro-4-((3-fluorobenzyl)oxy)phenyl)amino)quinazolin-6-yl)phenoxy)ethoxy)ethoxy)acetamido)-3,3-dimethylbutanoyl)-4-hydroxy-N-(4-(4-methylthiazol-5-yl)benzyl)pyrrolidine-2-carboxamide",
+  "structure_crosscheck": {
+    "isomeric_smiles": "CC1=C(SC=N1)C2=CC=C(C=C2)CNC(=O)[C@@H]3C[C@H](CN3C(=O)[C@H](C(C)(C)C)NC(=O)COCCOCCOC4=CC=C(C=C4)C5=CC6=C(C=C5)N=CN=C6NC7=CC(=C(C=C7)OCC8=CC(=CC=C8)F)Cl)O",
+    "portal_smiles": "Cc1ncsc1-c1ccc(CNC(=O)[C@@H]2C[C@@H](O)CN2C(=O)[C@@H](NC(=O)COCCOCCOc2ccc(-c3ccc4ncnc(Nc5ccc(OCc6cccc(F)c6)c(Cl)c5)c4c3)cc2)C(C)(C)C)cc1\n                    ",
+    "inchikey": "ZSCOIFSUFMYZEZ-YSWDPXALSA-N",
+    "inchi": "InChI=1S/C55H57ClFN7O8S/c1-34-50(73-33-61-34)38-10-8-35(9-11-38)28-58-53(67)47-27-42(65)29-64(47)54(68)51(55(2,3)4)63-49(66)31-70-21-20-69-22-23-71-43-16-12-37(13-17-43)39-14-18-46-44(25-39)52(60-32-59-46)62-41-15-19-48(45(56)26-41)72-30-36-6-5-7-40(57)24-36/h5-19,24-26,32-33,42,47,51,65H,20-23,27-31H2,1-4H3,(H,58,67)(H,63,66)(H,59,60,62)/t42-,47+,51-/m1/s1",
+    "molecular_formula": "C55H57ClFN7O8S",
+    "molecular_weight": 1030.6,
+    "stereocenter_count": 3,
+    "primary_si_page": 11,
+    "neutral_exact_mass": 1029.366188684,
+    "primary_si_protonated_mass": 1030.374,
+    "calculated_protonated_exact_mass": 1030.373465150621,
+    "portal_mass_interpretation": "1029.37 is rounded monoisotopic exact mass, despite molecular weight label",
+    "source_identity_match": true
+  },
+  "is_mock": false,
+  "notes": "Published HER2/EGFR degrader reference; not a novel design. Chemical preparation does not establish efficacy."
+}

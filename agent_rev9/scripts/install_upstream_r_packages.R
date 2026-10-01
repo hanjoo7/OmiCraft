@@ -1,0 +1,6 @@
+options(repos=c(CRAN='https://cloud.r-project.org'))
+remotes::install_github('mahmoudibrahim/genesorteR@08e234c06bb3bb70ecd8a7e69cecca3cbaa92428',upgrade='never',dependencies=FALSE)
+remotes::install_github('kerseviciute/aPEAR@4eb4aec0b6072ec2bbe39c1c44ee553fd51a92b1',upgrade='never',dependencies=FALSE)
+packages <- c('DESeq2','limma','sva','RUVSeq','edgeR','clusterProfiler','fgsea','apeglm','survival','genesorteR','aPEAR')
+stopifnot(all(vapply(packages, requireNamespace, logical(1), quietly=TRUE)))
+print(vapply(packages,function(name)as.character(packageVersion(name)), character(1)))

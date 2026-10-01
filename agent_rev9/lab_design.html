@@ -1,0 +1,54 @@
+<section id="designPanel">
+  <h2>Design</h2>
+  <label>설계 경로<select id="designRoute"></select></label>
+  <p id="designOrigin"></p>
+  <label>구조<select id="designAsset"><option value="">기존 입력 사용</option></select></label>
+  <label><span id="chainLabel">Target chain (PDB/auth)</span><input id="designChain" value="A" maxlength="4"></label>
+  <label>구조 등록 (PDB / mmCIF)<input id="structureFile" type="file" accept=".pdb,.cif,.mmcif"></label>
+  <button id="uploadStructure" class="mod-btn">구조 등록</button>
+  <label id="smilesLabel">Ligand SMILES<input id="designSmiles"></label>
+  <label id="boxLabel">Docking box (JSON)<textarea id="designBox" placeholder='{"center":[0,0,0],"size":[22,22,22]}'></textarea></label>
+  <details><summary>추가 설계 입력</summary><textarea id="designInput" placeholder='{"hotspot_residues":["A100"],"design_length":100}'></textarea>
+  <p>Degrader: warhead_smiles, e3_ligand_smiles, linker_smiles, warhead_map, e3_map, linker_maps, expected_full_smiles.</p></details>
+  <button class="mod-btn" id="runDesign">Run Design</button>
+  <p id="designStatus" role="status"></p><a id="designReport" hidden target="_blank">설계 결과</a>
+</section>
+<section><h2>저장된 구조</h2><select id="structureCatalog"></select><button class="mod-btn" id="viewStructure">구조 보기</button></section>
+<style>
+#designPanel [hidden]{display:none!important}
+#designPanel label{display:block;margin:8px 0;font-size:12px}#designPanel p{font-size:11px;line-height:1.5;color:#aab5c4}
+#designPanel input,#designPanel select,#designPanel textarea,#structureCatalog{box-sizing:border-box;width:100%;padding:7px;background:#0d1117;color:#eee;border:1px solid #30363d;border-radius:4px}
+#designPanel textarea{min-height:70px}#designPanel button{margin:8px 0}#designPanel a{color:#58a6ff}
+</style>
+<script>
+(async()=>{
+const el=id=>document.getElementById(id);let routes=[],assets=[],designTimer;
+async function api(path,body){const r=await fetch(path,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});const data=await r.json();if(!r.ok)throw new Error(data.detail||data.error||'요청 실패');return data;}
+function option(select,value,text){const o=document.createElement('option');o.value=value;o.textContent=text;select.append(o);}
+function selected(){return routes[Number(el('designRoute').value)];}
+function refresh(){const r=selected();if(!r)return;el('chainLabel').parentElement.hidden=r.origin==='prior_reference_inputs'&&!el('designAsset').value;el('designOrigin').textContent=r.origin==='prior_reference_inputs'?'기존 ERBB2 검증 입력을 다시 실행합니다. 신규 후보의 qualification 결과가 아닙니다.':r.parent_run_id+' · Tier '+r.tier;
+el('designAsset').replaceChildren();option(el('designAsset'),'','기존 입력 사용');for(const a of assets.filter(a=>a.gene===r.gene&&a.kind==='protein'))option(el('designAsset'),a.id,a.label);
+el('designChain').value=r.modality==='ADC'&&r.origin==='prior_reference_inputs'?'C':'A';const sm=r.modality==='SMALL_MOLECULE';el('smilesLabel').hidden=!sm;el('boxLabel').hidden=!sm;el('chainLabel').textContent=r.modality==='ADC'?'Antigen chain (mmCIF label)':'Target chain (PDB/auth)';el('designInput').value='';el('designSmiles').value='';el('designBox').value='';}
+async function loadAssets(){assets=await api('/api/structures');el('structureCatalog').replaceChildren();assets.forEach(a=>option(el('structureCatalog'),a.id,a.label));refresh();}
+window.openBinderDesign=()=>{
+ const gene=el('selGene').value;
+ const parent=new URLSearchParams(location.search).get('parent');
+ const matches=routes.map((r,i)=>({r,i})).filter(({r})=>r.gene===gene&&r.modality==='DE_NOVO_BINDER');
+ const match=matches.find(({r})=>r.parent_run_id===parent)||matches[0];
+ el('designRoute').value=match?String(match.i):'';
+ if(match)refresh();
+ el('designStatus').textContent=match?'Binder 설계 경로를 선택했습니다. 입력 확인 후 Run Design으로 실행하세요.':'이 유전자에는 설계 가능한 Binder 경로가 없습니다.';
+ const structure=assets.find(a=>a.gene===gene&&a.role==='predicted_complex'&&/binder/i.test(a.label||''))||assets.find(a=>a.gene===gene&&a.role==='target'&&a.kind==='protein');
+ setActive('binder');
+ if(structure){el('structureCatalog').value=structure.id;showViewer('/api/structures/'+encodeURIComponent(structure.id)+'/viewer');setStatus(structure.role==='predicted_complex'?'저장된 Binder 예측 복합체':'표적 구조 — Binder 복합체는 아직 없습니다.','done');}
+ else{el('viewerFrame').src='';el('viewerFrame').style.display='none';el('placeholder').style.display='';setStatus('저장된 Binder 구조가 없습니다. 설계 입력을 확인하세요.');}
+};
+el('designRoute').onchange=refresh;el('designAsset').onchange=()=>{el('chainLabel').parentElement.hidden=selected()?.origin==='prior_reference_inputs'&&!el('designAsset').value;el('designChain').value=selected()?.modality==='ADC'&&el('designAsset').value==='erbb2_1n8z'?'C':'A';};
+el('viewStructure').onclick=()=>showViewer('/api/structures/'+encodeURIComponent(el('structureCatalog').value)+'/viewer');
+el('uploadStructure').onclick=async()=>{try{const r=selected(),file=el('structureFile').files[0];if(!r||!file)throw new Error('설계 경로와 파일을 선택하세요.');if(file.size>5000000)throw new Error('최대 5 MB입니다.');const a=await api('/api/structures',{gene:r.gene,format:file.name.toLowerCase().endsWith('.pdb')?'pdb':'cif',content:await file.text()});await loadAssets();el('designAsset').value=a.id;el('designAsset').onchange();el('designStatus').textContent='구조 등록 완료';}catch(e){el('designStatus').textContent=e.message;}};
+async function pollDesign(id){try{const data=await api('/api/report?run_id='+encodeURIComponent(id));el('designStatus').textContent=data.running?'설계 실행 중':data.execution_status+' · '+(data.validation_decision||'NOT_EVALUATED');if(!data.running){el('runDesign').disabled=false;showViewer('/report?run_id='+encodeURIComponent(id));return;}}catch(e){el('designStatus').textContent='실행 기록 준비 중: '+e.message;}designTimer=setTimeout(()=>pollDesign(id),2500);}
+el('runDesign').onclick=async()=>{el('runDesign').disabled=true;try{const r=selected();if(!r)throw new Error('설계 가능한 경로가 없습니다.');let input=JSON.parse(el('designInput').value||'{}');if(el('designAsset').value)input={...input,asset_id:el('designAsset').value,target_chain:el('designChain').value};if(el('designSmiles').value.trim())input.ligand_smiles=el('designSmiles').value.trim();if(el('designBox').value.trim())input.docking_box=JSON.parse(el('designBox').value);
+const data=await api('/api/design',{parent_run_id:r.parent_run_id,gene:r.gene,modality:r.modality,input});el('designStatus').textContent='설계를 시작했습니다.';const link=el('designReport');link.hidden=false;link.href=data.report_url;clearTimeout(designTimer);pollDesign(data.report_run_id);}catch(e){el('designStatus').textContent=e.message;el('runDesign').disabled=false;}};
+try{routes=await api('/api/design/candidates');routes.forEach((r,i)=>option(el('designRoute'),i,r.gene+' · '+r.modality+' · '+(r.origin==='prior_reference_inputs'?'기존 검증 입력':r.parent_run_id)));const query=new URLSearchParams(location.search);const index=routes.findIndex(r=>r.parent_run_id===query.get('parent')&&r.gene===query.get('gene')&&r.modality===query.get('modality'));if(index>=0)el('designRoute').value=index;await loadAssets();el('btnBINDER').disabled=false;if(location.hash==='#design')el('designPanel').scrollIntoView();}catch(e){el('designStatus').textContent=e.message;}
+})();
+</script>

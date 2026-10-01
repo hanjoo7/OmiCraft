@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omicraft-agent-rev9"
+version = "0.9.0"
+readme = "README.md"
+description = "Therapeutic design and public TCGA analysis workflows"
+requires-python = ">=3.11"
+dependencies = [
+    "biopython>=1.83,<2",
+    "numpy>=1.26,<3",
+    "pydantic>=2,<3",
+    "psutil>=5.9,<8",
+    "PyYAML>=6,<7",
+    "rdkit>=2024.3",
+    "zstandard>=0.22,<1",
+]
+
+[project.optional-dependencies]
+web = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "matplotlib>=3.9,<4", "pandas>=2.2,<3"]
+graph = ["langgraph>=1,<2"]
+ngrok = ["pyngrok>=7,<8"]
+antibody = ["anarcii==2.0.8"]
+test = ["pytest>=8,<10", "ruff>=0.11"]
+pose-qc = ["posebusters", "prolif"]
+
+[project.scripts]
+omicraft-screen = "agent_rev9.__main__:main"
+omicraft-serve = "agent_rev9.launch:main"
+
+[tool.setuptools]
+packages = [
+    "agent_rev9", "agent_rev9.scripts", "agent_rev9.support",
+    "agent_rev9.support.af3_backbone", "agent_rev9.support.admet_pipeline",
+    "agent_rev9.support.pipeline_common",
+]
+package-dir = {agent_rev9 = "."}
+include-package-data = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".."]
+addopts = "-ra --import-mode=importlib -m 'not external_tool'"
+markers = ["external_tool: opt-in installed tool checks", "local_io: local HTTP servers and CPU worker subprocesses only"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/run_admet_pipeline.py" = ["E402"]
+
+[tool.setuptools.package-data]
+agent_rev9 = ["assets/*.js", "assets/*.css", "assets/*.png", "assets/*LICENSE.txt", "templates/*.html", "*.html", "*.R", "scripts/*.R", "configs/*.example.json", "configs/binder.json", "configs/small_molecule.json", "configs/degrader_sjf1528_reference.json", "configs/competition_demo.json", "configs/lab_ligands.json", "configs/llm.json", "configs/*.yaml", "configs/*.yml", "examples/binder/*.json", "examples/binder/*.pdb", "examples/small_molecule/*.json", "examples/small_molecule/*.pdb"]
+
+[tool.setuptools.exclude-package-data]
+"*" = [".secrets/*", "*.local.json", "__pycache__/*"]

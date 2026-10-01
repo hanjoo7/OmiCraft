@@ -1,0 +1,9 @@
+{
+  "execution_profile": "competition_demo",
+  "competition_demo": {
+    "source_run": "runs/real_validation_20260922T133906Z",
+    "selection_mode": "showcase_all",
+    "linker_payload_template": null,
+    "degrader_component_config": null
+  }
+}

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OmiCraft — Structure Lab</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f1117;color:#e0e0e0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.header{background:#161b22;border-bottom:1px solid #30363d;padding:14px 24px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.header a{color:#8b949e;text-decoration:none;font-size:13px}.header a:hover{color:#58a6ff}
+.header h1{font-size:18px;font-weight:700;color:#fff}
+.body{display:flex;flex:1;overflow:hidden}
+.panel{width:300px;flex-shrink:0;background:#161b22;border-right:1px solid #30363d;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.viewer-area{flex:1;background:#0d1117;position:relative}
+.viewer-area iframe{width:100%;height:100%;border:none}
+.placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#6e7681;gap:12px}
+.placeholder .icon{font-size:48px}
+.placeholder p{font-size:14px}
+h2{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.gene-row{display:flex;gap:8px;align-items:center}
+.gene-row label{font-size:12px;color:#8b949e;flex-shrink:0}
+.gene-row select{flex:1;padding:6px 8px;background:#0d1117;border:1px solid #30363d;border-radius:4px;color:#e0e0e0;font-size:13px}
+.mod-btn{width:100%;padding:12px 16px;border:1px solid #30363d;border-radius:8px;background:#0d1117;color:#e0e0e0;font-size:13px;font-weight:600;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;transition:.2s}
+.mod-btn:hover{border-color:#58a6ff}
+.mod-btn.active{border-color:#238636;background:#0d2318}
+.mod-btn.running{border-color:#f0883e}
+.mod-btn .title{display:flex;align-items:center;gap:8px;font-size:14px}
+.mod-btn .title .ico{font-size:20px}
+.mod-btn .desc{font-size:11px;color:#8b949e;font-weight:400;line-height:1.5}
+.mod-btn .badge{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;background:#21262d;color:#8b949e;margin-top:2px}
+.mod-btn.active .badge{background:#238636;color:#fff}
+.status-box{padding:10px 12px;border-radius:6px;background:#0d1117;border:1px solid #30363d;font-size:12px;font-family:monospace;min-height:60px;color:#8b949e;line-height:1.6;word-break:break-all}
+.status-box.running{border-color:#f0883e;color:#f0883e}
+.status-box.done{border-color:#238636;color:#3fb950}
+.status-box.error{border-color:#da3633;color:#f85149}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</head>
+<body>
+<div class="header">
+  <a href="/">&#8592; Dashboard</a>
+  <h1>Structure Lab</h1>
+  <span style="flex:1"></span>
+  <span style="font-size:12px;color:#8b949e">Design / Structure Lab</span>
+</div>
+<div class="body">
+  <div class="panel">
+    <div>
+      <h2>Target Gene</h2>
+      <div class="gene-row" style="margin-top:6px">
+        <label>Gene</label>
+        <select id="selGene"></select>
+      </div>
+      <div class="gene-row" style="margin-top:6px">
+        <label>Ligand</label>
+        <select id="selLig"></select>
+      </div>
+    </div>
+
+    <div>
+      <h2>Modality</h2>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+
+        <button class="mod-btn" id="btnADC" onclick="run('adc')">
+          <span class="title"><span class="ico">&#128137;</span>ADC</span>
+          <span class="desc">Antibody-Drug Conjugate<br>단백질 표면 시각화 (항체 적합성 판정 아님)</span>
+          <span class="badge" id="badgeADC">등록된 실험 구조</span>
+        </button>
+
+        <button class="mod-btn" id="btnSM" onclick="run('sm')">
+          <span class="title"><span class="ico">&#128138;</span>SMALL_MOLECULE</span>
+          <span class="desc">GNINA · Vina score (CPU)<br>도킹 pose와 점수 계산</span>
+          <span class="badge" id="badgeSM">PDB 3ERT 기준</span>
+        </button>
+
+        <button class="mod-btn" id="btnBINDER" onclick="run('binder')" disabled>
+          <span class="title"><span class="ico">&#129516;</span>DE_NOVO_BINDER</span>
+          <span class="desc">Binder 설계 경로 선택<br>저장된 복합체 또는 표적 구조 보기</span>
+          <span class="badge" id="badgeBINDER">RFD3 · ProteinMPNN · AF3</span>
+        </button>
+
+        <button class="mod-btn" id="btnPROTAC" onclick="run('protac')">
+          <span class="title"><span class="ico">&#128279;</span>DEGRADER (PROTAC)</span>
+          <span class="desc">삼자 복합체 개념 뷰<br>표적 단백질 + E3 ligase (CRBN)</span>
+          <span class="badge" id="badgePROTAC">3ERT + 4TZ4</span>
+        </button>
+
+      </div>
+    </div>
+
+    <div>
+      <h2>Status</h2>
+      <div class="status-box" id="statusBox">모달리티 버튼을 클릭하세요</div>
+    </div>
+  </div>
+
+  <div class="viewer-area" id="viewerArea">
+    <div class="placeholder" id="placeholder">
+      <span class="icon">&#128300;</span>
+      <p>버튼을 클릭하면 3D 구조가 표시됩니다</p>
+    </div>
+    <iframe id="viewerFrame" src="" style="display:none"></iframe>
+  </div>
+</div>
+
+<script>
+let pollTimer = null;
+const GENE_DB={
+  ESR1:{pdb:'3ERT',ligands:[{v:'tamoxifen',t:'Tamoxifen'},{v:'fulvestrant',t:'Fulvestrant'},{v:'estradiol',t:'Estradiol'}]},
+  ERBB2:{pdb:'3RCD',ligands:[{v:'tak285',t:'TAK-285'},{v:'lapatinib',t:'Lapatinib'}]},
+};
+function opt(sel,v,t){const o=document.createElement('option');o.value=v;o.textContent=t;sel.append(o);}
+function updateGeneUI(){
+  const g=document.getElementById('selGene').value;
+  const info=GENE_DB[g]||{pdb:'AF-'+g,ligands:[{v:'none',t:'(리간드 없음)'}]};
+  const ls=document.getElementById('selLig');
+  ls.replaceChildren();
+  info.ligands.forEach(l=>opt(ls,l.v,l.t));
+  document.getElementById('badgeSM').textContent=info.pdb+(info.ligands[0]?' / '+info.ligands[0].t:'');
+  document.getElementById('badgePROTAC').textContent=info.pdb+' + 4TZ4';
+}
+(async()=>{
+  const gs=document.getElementById('selGene');
+  const query=new URLSearchParams(location.search);
+  const urlGene=query.get('gene')||'';
+  const added=new Set();
+  if(urlGene){opt(gs,urlGene,urlGene+' (ADVANCE)');added.add(urlGene);}
+  try{
+    const candidates=await fetch('/api/design/candidates').then(r=>r.json());
+    candidates.forEach(c=>{if(!added.has(c.gene)){opt(gs,c.gene,c.gene);added.add(c.gene);}});
+  }catch(e){}
+  ['ESR1','ERBB2'].forEach(g=>{if(!added.has(g)){opt(gs,g,g);added.add(g);}});
+  if(urlGene)gs.value=urlGene;
+  updateGeneUI();
+  gs.onchange=updateGeneUI;
+})();
+
+function setStatus(msg, cls){
+  const sb = document.getElementById('statusBox');
+  sb.textContent = msg;
+  sb.className = 'status-box' + (cls ? ' ' + cls : '');
+}
+
+function showViewer(url){
+  document.getElementById('placeholder').style.display = 'none';
+  const fr = document.getElementById('viewerFrame');
+  fr.style.display = 'block';
+  fr.src = url;
+}
+
+function setActive(mode){
+  ['ADC','SM','BINDER','PROTAC'].forEach(m=>{
+    document.getElementById('btn'+m).classList.remove('active','running');
+  });
+  const map = {adc:'ADC', sm:'SM', binder:'BINDER', protac:'PROTAC'};
+  const btn = document.getElementById('btn'+(map[mode]||''));
+  if(btn) btn.classList.add('active');
+}
+
+function poll(sid, mode){
+  clearTimeout(pollTimer);
+  pollTimer = setTimeout(async ()=>{
+    try{
+      const r = await fetch('/api/lab/status/'+sid).then(x=>x.json());
+      const st = (r.status||'').toLowerCase();
+      if(st === 'running'){
+        setStatus('처리 중...', 'running');
+        poll(sid, mode);
+      } else if(st === 'done'){
+        const url = r.viewer_url || ('/api/lab/viewer/'+sid);
+        setStatus('완료! '+(r.message||''), 'done');
+        setActive(mode);
+        showViewer(url);
+        const map = {adc:'ADC', sm:'SM', binder:'BINDER', protac:'PROTAC'};
+        const badge = document.getElementById('badge'+(map[mode]||''));
+        if(badge && r.best_affinity_kcal_mol != null){
+          badge.textContent = 'Docking score = '+r.best_affinity_kcal_mol+' kcal/mol';
+          badge.style.background='#238636'; badge.style.color='#fff';
+        }
+      } else {
+        setStatus('오류: '+(r.error||r.message||'unknown'), 'error');
+      }
+    } catch(e){ setStatus('네트워크 오류: '+e.message, 'error'); }
+  }, 1500);
+}
+
+async function run(mode){
+  clearTimeout(pollTimer);
+  if(mode==='binder'){window.openBinderDesign();return;}
+  const gene = document.getElementById('selGene').value;
+  const lig  = document.getElementById('selLig').value;
+
+  ['ADC','SM','BINDER','PROTAC'].forEach(m=>{
+    document.getElementById('btn'+m).classList.remove('active','running');
+  });
+  const map = {adc:'ADC', sm:'SM', binder:'BINDER', protac:'PROTAC'};
+  const runBtn = document.getElementById('btn'+(map[mode]||''));
+  if(runBtn) runBtn.classList.add('running');
+
+  setStatus('요청 전송 중...', 'running');
+
+  const urls  = {adc:'/api/lab/adc', sm:'/api/lab/sm', protac:'/api/lab/protac'};
+  const bodies = {
+    adc:    {gene},
+    sm:     {gene, pdb_id:(GENE_DB[gene]||{}).pdb||('AF-'+gene), ligand: lig},
+    protac: {gene, target_pdb:(GENE_DB[gene]||{}).pdb||('AF-'+gene), e3_pdb:'4TZ4'},
+  };
+
+  try{
+    const resp = await fetch(urls[mode], {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(bodies[mode]),
+    }).then(x=>x.json());
+
+    const ist = (resp.status||'').toLowerCase();
+    if(ist === 'done' || resp.viewer_url){
+      const vurl = resp.viewer_url || ('/api/lab/viewer/'+resp.session);
+      setStatus('완료! '+(resp.message||''), 'done');
+      setActive(mode);
+      showViewer(vurl);
+    } else if(ist === 'running'){
+      setStatus('실행 중... (등록된 구조 분석)', 'running');
+      poll(resp.session, mode);
+    } else {
+      setStatus('오류: '+(resp.detail||resp.error||'요청 실패'), 'error');
+    }
+  } catch(e){ setStatus('요청 실패: '+e.message, 'error'); }
+}
+</script>
+</body>
+</html>

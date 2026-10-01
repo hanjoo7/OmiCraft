@@ -1,0 +1,33 @@
+{
+  "route": "small_molecule",
+  "context": {
+    "gene_name": "TARGET",
+    "raw_receptor_path": "target.pdb",
+    "prepared_receptor_path": "prepared_target.pdb",
+    "target_chain": "A",
+    "target_sequence": "REPLACE_WITH_TARGET_SEQUENCE",
+    "docking_box": {
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "size": [
+        20,
+        20,
+        20
+      ]
+    },
+    "receptor_preparation": {
+      "preparation_method": "REPLACE_WITH_PREPARATION_METHOD",
+      "protonation_method": "as_supplied",
+      "ph": null
+    }
+  },
+  "candidates": [
+    {
+      "candidate_id": "compound_001",
+      "smiles": "REPLACE_WITH_SMILES"
+    }
+  ]
+}

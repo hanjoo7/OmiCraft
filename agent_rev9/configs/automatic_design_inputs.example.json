@@ -1,0 +1,15 @@
+{
+  "routes": {
+    "MMP7:DE_NOVO_BINDER": {
+      "asset_id": "uploaded_69086ea454fd413eaea1b97f50714291",
+      "target_chain": "A",
+      "hotspot_residues": [
+        "A80"
+      ],
+      "design_length": 80,
+      "num_designs": 8,
+      "num_sequences": 2,
+      "design_seed": 107
+    }
+  }
+}
